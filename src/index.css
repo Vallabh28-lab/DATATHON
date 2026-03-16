@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased text-slate-900 bg-slate-50;
+  }
+  
+  /* High Contrast Mode Overrides */
+  .theme-high-contrast {
+    @apply bg-black text-white;
+  }
+  .theme-high-contrast * {
+    @apply border-white;
+  }
+  .theme-high-contrast button {
+    @apply bg-yellow-400 text-black border-2 border-yellow-400 font-bold hover:bg-yellow-500;
+  }
+  .theme-high-contrast input {
+    @apply bg-black text-white border-2 border-white focus:ring-yellow-400 focus:border-yellow-400;
+  }
+  .theme-high-contrast a {
+    @apply text-yellow-400 underline;
+  }
+  .theme-high-contrast .panel-left {
+    @apply bg-black border-r-4 border-white text-white;
+  }
+  .theme-high-contrast .panel-right {
+    @apply bg-black text-white;
+  }
+  .theme-high-contrast .high-contrast-card {
+    @apply bg-black border-2 border-white;
+  }
+  .theme-high-contrast .text-primary-600 {
+    @apply text-yellow-400;
+  }
+  .theme-high-contrast .bg-primary-600 {
+    @apply bg-yellow-400 text-black;
+  }
+
+  /* Large Text Mode Overrides */
+  .theme-large-text {
+    font-size: 115%;
+  }
+  .theme-large-text h1 {
+    @apply text-5xl;
+  }
+  .theme-large-text h2 {
+    @apply text-4xl;
+  }
+  .theme-large-text p, .theme-large-text input, .theme-large-text button {
+    @apply text-xl;
+  }
+}
