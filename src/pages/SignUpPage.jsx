@@ -1,17 +1,7 @@
 import React from 'react';
-import { SignIn, SignUp, useAuth } from '@clerk/react';
-import { useNavigate } from 'react-router-dom';
+import { SignUp } from '@clerk/react';
 
-export default function AuthPage() {
-  const { isSignedIn } = useAuth();
-  const navigate = useNavigate();
-
-  // Redirect if already signed in
-  if (isSignedIn) {
-    navigate('/dashboard');
-    return null;
-  }
-
+export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
       <div className="flex flex-col items-center">
@@ -21,12 +11,12 @@ export default function AuthPage() {
           <span className="text-3xl font-black text-indigo-700">BoundlessEd</span>
         </div>
 
-        {/* Clerk Sign In */}
-        <SignIn 
+        {/* Clerk Sign Up */}
+        <SignUp 
           routing="path" 
-          path="/"
-          signUpUrl="/sign-up"
-          afterSignInUrl="/dashboard"
+          path="/sign-up"
+          signInUrl="/"
+          afterSignUpUrl="/dashboard"
         />
       </div>
     </div>
