@@ -1,0 +1,36 @@
+1. My Notes & Transcripts Section
+Auto-Save Engine: Implements "Draft" states so users never lose work if the tab closes.
+
+Rich Text Parsing: Backend support for storing Markdown or HTML instead of just plain text.
+
+Version History: A "Snapshot" system to restore previous versions of a note.
+
+Folder/Category Logic: A many-to-one relationship to group notes by course or subject.
+
+Full-Text Search (Indexing): Using Django's __icontains or PostgreSQL's SearchVector to find keywords inside long transcripts.
+
+Note Sharing (Permissions): Generating "Public Links" or shared access for teammates.
+
+Export Engine: Backend logic to convert notes into PDF or TXT files.
+
+2. Analytics Section
+Activity Heatmap API: Data aggregation that calculates "Intensity" (e.g., how many hours spent per day).
+
+Progress Serialization: Logic that compares "Lessons Completed" vs. "Total Lessons" to return percentage values.
+
+Daily Streaks Tracker: A backend counter that tracks consecutive days of login/activity.
+
+Engagement Scoring: A formula-based feature that assigns points for using the AI Assistant or Voice Search.
+
+Trend Analysis: Compares this week's activity to last week's to show "Growth" or "Decline."
+
+Goal Setting Persistence: Storing user-defined targets (e.g., "30 mins/day") and checking completion status.
+
+Leaderboard Logic: Aggregating data across all users to show a "Top Learners" ranking.
+
+3. Core "Expert" Features (Cross-Sectional)
+JWT Authentication: Ensuring only the owner of the note/data can see it.
+
+Rate Limiting: Protecting your EC2 from being overwhelmed by too many "Save" or "Fetch" requests.
+
+Caching (Redis): Storing analytics results so the page loads instantly without re-calculating the database every time.

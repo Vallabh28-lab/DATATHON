@@ -5,97 +5,86 @@ const card = 'rounded-2xl bg-white p-6 shadow-sm border border-gray-100 hover:sh
 
 const panels = {
   dashboard: () => (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-black text-gray-900">Welcome back! 👋</h2>
-          <p className="text-gray-600 mt-1">Here's what's happening with your learning today</p>
-        </div>
-        <button className="px-6 py-3 rounded-xl font-semibold text-white bg-[#2F7EDA] hover:bg-[#1a5bb8] transition shadow-lg hover:shadow-xl">
-          + New Course
-        </button>
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900">Welcome back, Student 👋</h1>
+        <p className="text-sm text-gray-500 mt-1">Here's your learning snapshot for today</p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { icon: '📚', label: 'Active Courses', value: '6', change: '+2 this month', color: 'from-blue-500 to-blue-600' },
-          { icon: '✅', label: 'Completed Lessons', value: '24', change: '+8 this week', color: 'from-green-500 to-green-600' },
-          { icon: '🏆', label: 'Achievements', value: '5', change: '2 pending', color: 'from-purple-500 to-purple-600' },
-          { icon: '🔥', label: 'Day Streak', value: '12', change: 'Keep it up!', color: 'from-orange-500 to-orange-600' },
-        ].map(({ icon, label, value, change, color }) => (
-          <div key={label} className={`${card} relative overflow-hidden group cursor-pointer`}>
-            <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${color} opacity-10 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-300`}></div>
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-4xl">{icon}</span>
-                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">{change}</span>
-              </div>
-              <p className="text-3xl font-black text-gray-900 mb-1">{value}</p>
-              <p className="text-sm text-gray-600 font-medium">{label}</p>
-            </div>
-          </div>
-        ))}
+        <div className="bg-white rounded-2xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+          <p className="text-sm text-gray-500">Active Courses</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">6</p>
+          <p className="text-xs text-green-500 mt-1">+2 this month</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+          <p className="text-sm text-gray-500">Completed Lessons</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">24</p>
+          <p className="text-xs text-green-500 mt-1">+8 this week</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+          <p className="text-sm text-gray-500">Achievements</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">5</p>
+          <p className="text-xs text-yellow-500 mt-1">2 pending</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+          <p className="text-sm text-gray-500">Day Streak</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">12</p>
+          <p className="text-xs text-orange-500 mt-1">🔥 Keep it up!</p>
+        </div>
       </div>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Progress Overview - Takes 2 columns */}
-        <div className="lg:col-span-2">
-          <div className={card}>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="font-bold text-xl text-gray-900">📊 Learning Progress</h3>
-                <p className="text-sm text-gray-600 mt-1">Track your course completion</p>
-              </div>
-              <button className="text-sm font-semibold text-[#2F7EDA] hover:text-[#1a5bb8] transition">View All →</button>
-            </div>
-            <div className="space-y-5">
-              {[
-                { course: 'Web Accessibility Fundamentals', pct: 72, lessons: '18/25 lessons', color: '#2F7EDA' },
-                { course: 'React Development Basics', pct: 45, lessons: '9/20 lessons', color: '#10b981' },
-                { course: 'Node.js Backend Mastery', pct: 30, lessons: '6/20 lessons', color: '#f59e0b' },
-                { course: 'UI/UX Design Principles', pct: 15, lessons: '3/20 lessons', color: '#8b5cf6' },
-              ].map(({ course, pct, lessons, color }) => (
-                <div key={course} className="group">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-900 group-hover:text-[#2F7EDA] transition">{course}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{lessons}</p>
-                    </div>
-                    <span className="text-lg font-bold ml-4" style={{ color }}>{pct}%</span>
+        {/* Learning Progress - 2 columns */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900">Learning Progress</h2>
+            <button className="text-sm text-blue-500 hover:text-blue-600 font-medium transition-colors">View All →</button>
+          </div>
+          <div className="space-y-5">
+            {[
+              { course: 'Web Accessibility Fundamentals', lessons: '18/25 lessons', pct: 72 },
+              { course: 'React Development Basics', lessons: '9/20 lessons', pct: 45 },
+              { course: 'Node.js Backend Mastery', lessons: '6/20 lessons', pct: 30 },
+              { course: 'UI/UX Design Principles', lessons: '3/20 lessons', pct: 15 },
+            ].map(({ course, lessons, pct }) => (
+              <div key={course}>
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{course}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{lessons}</p>
                   </div>
-                  <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
-                    <div 
-                      className="h-2.5 rounded-full transition-all duration-500 ease-out" 
-                      style={{ width: `${pct}%`, backgroundColor: color }}
-                    />
-                  </div>
+                  <span className="text-sm font-semibold text-gray-900">{pct}%</span>
                 </div>
-              ))}
-            </div>
+                <div className="bg-gray-200 h-2 rounded-full overflow-hidden">
+                  <div className="bg-blue-500 h-2 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Activity Feed - Takes 1 column */}
-        <div className={card}>
-          <h3 className="font-bold text-xl text-gray-900 mb-6">🔔 Recent Activity</h3>
+        {/* Recent Activity - 1 column */}
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Recent Activity</h2>
           <div className="space-y-4">
             {[
-              { action: 'Completed lesson', title: 'ARIA Labels', time: '2 hours ago', icon: '✅', color: 'bg-green-100 text-green-600' },
-              { action: 'Started course', title: 'React Hooks', time: '1 day ago', icon: '🚀', color: 'bg-blue-100 text-blue-600' },
-              { action: 'Earned badge', title: 'Quick Learner', time: '2 days ago', icon: '🏆', color: 'bg-purple-100 text-purple-600' },
-              { action: 'Submitted quiz', title: 'CSS Flexbox', time: '3 days ago', icon: '📝', color: 'bg-orange-100 text-orange-600' },
-            ].map(({ action, title, time, icon, color }, idx) => (
+              { icon: '✅', title: 'Completed lesson', subtitle: 'ARIA Labels', time: '2 hours ago', color: 'bg-green-100 text-green-600' },
+              { icon: '🚀', title: 'Started course', subtitle: 'React Hooks', time: '1 day ago', color: 'bg-blue-100 text-blue-600' },
+              { icon: '🏆', title: 'Earned badge', subtitle: 'Quick Learner', time: '2 days ago', color: 'bg-purple-100 text-purple-600' },
+              { icon: '📝', title: 'Submitted quiz', subtitle: 'CSS Flexbox', time: '3 days ago', color: 'bg-orange-100 text-orange-600' },
+            ].map(({ icon, title, subtitle, time, color }, idx) => (
               <div key={idx} className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center text-lg shrink-0`}>
+                <div className={`w-9 h-9 rounded-lg ${color} flex items-center justify-center text-base shrink-0`}>
                   {icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{action}</p>
-                  <p className="text-sm text-gray-600 truncate">{title}</p>
-                  <p className="text-xs text-gray-500 mt-1">{time}</p>
+                  <p className="text-sm font-medium text-gray-900">{title}</p>
+                  <p className="text-sm text-gray-600 truncate">{subtitle}</p>
+                  <p className="text-xs text-gray-400 mt-1">{time}</p>
                 </div>
               </div>
             ))}
@@ -104,30 +93,31 @@ const panels = {
       </div>
 
       {/* Continue Learning Section */}
-      <div className={card}>
+      <div className="bg-white rounded-2xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-bold text-xl text-gray-900">▶️ Continue Learning</h3>
-          <button className="text-sm font-semibold text-[#2F7EDA] hover:text-[#1a5bb8] transition">Browse All →</button>
+          <h2 className="text-lg font-semibold text-gray-900">Continue Learning</h2>
+          <button className="text-sm text-blue-500 hover:text-blue-600 font-medium transition-colors">Browse All →</button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2">
           {[
-            { title: 'Semantic HTML', progress: 65, time: '12 min left', thumb: '🌐' },
-            { title: 'JavaScript ES6', progress: 40, time: '25 min left', thumb: '🟡' },
-            { title: 'CSS Grid Layout', progress: 80, time: '5 min left', thumb: '🎨' },
-          ].map(({ title, progress, time, thumb }) => (
-            <div key={title} className="p-4 rounded-xl border border-gray-200 hover:border-[#2F7EDA] hover:shadow-md transition-all cursor-pointer group">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#2F7EDA] to-[#1a5bb8] flex items-center justify-center text-2xl">
-                  {thumb}
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900 group-hover:text-[#2F7EDA] transition">{title}</p>
-                  <p className="text-xs text-gray-500">{time}</p>
+            { title: 'Semantic HTML', time: '12 min left', progress: 65 },
+            { title: 'JavaScript ES6', time: '25 min left', progress: 40 },
+            { title: 'CSS Grid Layout', time: '5 min left', progress: 80 },
+            { title: 'React Components', time: '18 min left', progress: 55 },
+          ].map(({ title, time, progress }) => (
+            <div key={title} className="bg-gray-50 rounded-xl p-4 min-w-[240px] hover:bg-gray-100 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{title}</p>
+                  <p className="text-xs text-gray-500 mt-1">{time}</p>
                 </div>
               </div>
-              <div className="h-1.5 rounded-full bg-gray-100">
-                <div className="h-1.5 rounded-full bg-[#2F7EDA]" style={{ width: `${progress}%` }} />
+              <div className="bg-gray-200 h-1.5 rounded-full mb-3">
+                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${progress}%` }} />
               </div>
+              <button className="w-full py-2 px-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors">
+                Resume
+              </button>
             </div>
           ))}
         </div>
@@ -137,30 +127,179 @@ const panels = {
 
   courses: () => (
     <div className="space-y-6">
-      <h2 className="text-3xl font-black text-gray-900">📚 My Courses</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {[['Web Accessibility', '12 lessons', '🌐'], ['React for All', '8 lessons', '⚛️'], ['Node.js Basics', '10 lessons', '🟢'], ['AI & Learning', '6 lessons', '🤖']].map(([title, lessons, icon]) => (
-          <div key={title} className={`${card} flex gap-4 items-center cursor-pointer hover:-translate-y-1`}>
-            <span className="text-5xl">{icon}</span>
-            <div>
-              <p className="font-bold text-lg text-gray-900">{title}</p>
-              <p className="text-sm text-gray-600">{lessons}</p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">My Courses</h1>
+          <p className="text-sm text-gray-500 mt-1">Continue your learning journey</p>
+        </div>
+        <button className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors">
+          Browse Courses
+        </button>
+      </div>
+
+      {/* Course Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          { title: 'Web Accessibility Fundamentals', lessons: '25 lessons', progress: 72, status: 'In Progress', icon: '🌐', color: 'bg-blue-100 text-blue-600' },
+          { title: 'React Development Basics', lessons: '20 lessons', progress: 45, status: 'In Progress', icon: '⚛️', color: 'bg-cyan-100 text-cyan-600' },
+          { title: 'Node.js Backend Mastery', lessons: '20 lessons', progress: 30, status: 'In Progress', icon: '🟢', color: 'bg-green-100 text-green-600' },
+          { title: 'UI/UX Design Principles', lessons: '20 lessons', progress: 15, status: 'In Progress', icon: '🎨', color: 'bg-purple-100 text-purple-600' },
+          { title: 'JavaScript ES6 Advanced', lessons: '18 lessons', progress: 100, status: 'Completed', icon: '🟡', color: 'bg-yellow-100 text-yellow-600' },
+          { title: 'CSS Grid & Flexbox', lessons: '15 lessons', progress: 100, status: 'Completed', icon: '🎯', color: 'bg-pink-100 text-pink-600' },
+        ].map(({ title, lessons, progress, status, icon, color }) => (
+          <div 
+            key={title} 
+            className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+          >
+            {/* Icon and Status */}
+            <div className="flex items-start justify-between mb-4">
+              <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center text-2xl`}>
+                {icon}
+              </div>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                status === 'Completed' 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-blue-100 text-blue-700'
+              }`}>
+                {status}
+              </span>
             </div>
+
+            {/* Course Info */}
+            <h3 className="text-base font-semibold text-gray-900 mb-1">{title}</h3>
+            <p className="text-sm text-gray-500 mb-4">{lessons}</p>
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+                <span>Progress</span>
+                <span className="font-semibold">{progress}%</span>
+              </div>
+              <div className="bg-gray-200 h-2 rounded-full overflow-hidden">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-500 ${
+                    progress === 100 ? 'bg-green-500' : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Continue Button */}
+            <button className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-900 text-sm font-medium rounded-lg transition-colors">
+              {status === 'Completed' ? 'Review' : 'Continue'}
+            </button>
           </div>
         ))}
       </div>
     </div>
   ),
 
-  ai: () => (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-black text-gray-900">🤖 AI Assistant</h2>
-      <div className={`${card} h-96 flex items-center justify-center text-gray-500`}>
-        Chat interface coming soon...
+  ai: () => {
+    const [messages, setMessages] = React.useState([
+      { type: 'ai', text: 'Hi! I\'m your AI Learning Assistant. How can I help you today?' },
+      { type: 'user', text: 'Can you explain React Hooks?' },
+      { type: 'ai', text: 'React Hooks are functions that let you use state and other React features in functional components. The most common hooks are useState for managing state and useEffect for side effects.' },
+    ]);
+    const [input, setInput] = React.useState('');
+
+    const suggestedPrompts = [
+      'Explain React Hooks',
+      'Summarize my notes',
+      'Generate quiz questions',
+      'Help with accessibility',
+    ];
+
+    const handleSend = () => {
+      if (input.trim()) {
+        setMessages([...messages, { type: 'user', text: input }]);
+        setInput('');
+        // Simulate AI response
+        setTimeout(() => {
+          setMessages(prev => [...prev, { type: 'ai', text: 'I\'m processing your question. This is a demo response.' }]);
+        }, 1000);
+      }
+    };
+
+    return (
+      <div className="flex flex-col h-full bg-white rounded-2xl shadow-sm">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl">
+              🤖
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">AI Learning Assistant</h2>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-xs text-gray-500">Online</span>
+              </div>
+            </div>
+          </div>
+          <button className="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {messages.map((msg, idx) => (
+            <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                msg.type === 'user' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 text-gray-900'
+              }`}>
+                <p className="text-sm leading-relaxed">{msg.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Suggested Prompts */}
+        <div className="px-6 py-3 border-t border-gray-100">
+          <p className="text-xs text-gray-500 mb-2">Suggested prompts:</p>
+          <div className="flex flex-wrap gap-2">
+            {suggestedPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => setInput(prompt)}
+                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-full transition-colors"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Input Section */}
+        <div className="px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Ask anything about your learning..."
+              className="flex-1 px-4 py-3 bg-gray-100 rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+            <button
+              onClick={handleSend}
+              className="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
-      <input placeholder="Ask me anything..." className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-[#2F7EDA] focus:ring-2 focus:ring-[#2F7EDA]/20 transition" />
-    </div>
-  ),
+    );
+  },
 
   notes: () => (
     <div className="space-y-6">

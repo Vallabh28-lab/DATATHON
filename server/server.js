@@ -125,3 +125,10 @@ const options = {
 https.createServer(options, app).listen(3000, () => {
   console.log('🔐 HTTPS Server running on https://localhost:3000');
 });
+
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server is LIVE at http://44.222.209.204:${PORT}`);
+});

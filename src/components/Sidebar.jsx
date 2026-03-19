@@ -1,38 +1,45 @@
 import React from 'react';
+import { Home, BookOpen, Bot, FileText, BarChart3, Settings, Mic, Search, Hand, Eye, Ear, MessageSquare, Volume2, Headphones } from 'lucide-react';
 
-const commonItems = [
-  { icon: '🏠', label: 'Dashboard',    id: 'dashboard' },
-  { icon: '📚', label: 'My Courses',      id: 'courses'   },
-  { icon: '🤖', label: 'AI Assistant', id: 'ai'        },
-  { icon: '📝', label: 'My Notes',        id: 'notes'     },
-  { icon: '📊', label: 'Analytics',     id: 'progress'  },
-  { icon: '⚙️', label: 'Settings',    id: 'settings'  },
-];
-
-const adaptiveItems = {
-  blind: [
-    { icon: '👁️', label: 'Vision Support', id: 'vision' },
-    { icon: '🔊', label: 'Text to Speech', id: 'tts'   },
-    { icon: '🎧', label: 'Audio Library',  id: 'audio' },
+const sections = {
+  search: [
+    { icon: Mic, label: 'Voice Search', id: 'voicesearch' },
+    { icon: Search, label: 'Text Search', id: 'textsearch' },
+    { icon: Hand, label: 'Sign Language', id: 'signsearch' },
   ],
-  deaf: [
-    { icon: '👂', label: 'Hearing Support', id: 'hearing' },
-    { icon: '📝', label: 'Live Transcription', id: 'stt'       },
-    { icon: '💬', label: 'Live Captions',      id: 'subtitles' },
+  accessibility: {
+    blind: [
+      { icon: Eye, label: 'Vision Support', id: 'vision' },
+      { icon: Volume2, label: 'Text to Speech', id: 'tts' },
+      { icon: Headphones, label: 'Audio Library', id: 'audio' },
+    ],
+    deaf: [
+      { icon: Ear, label: 'Hearing Support', id: 'hearing' },
+      { icon: FileText, label: 'Live Transcription', id: 'stt' },
+      { icon: MessageSquare, label: 'Live Captions', id: 'subtitles' },
+    ],
+    mute: [
+      { icon: MessageSquare, label: 'Speech Support', id: 'speech' },
+      { icon: Volume2, label: 'Voice Generator', id: 'vocalize' },
+      { icon: MessageSquare, label: 'Chat Bridge', id: 'chatbridge' },
+    ],
+  },
+  core: [
+    { icon: Home, label: 'Dashboard', id: 'dashboard' },
+    { icon: BookOpen, label: 'My Courses', id: 'courses' },
+    { icon: Bot, label: 'AI Assistant', id: 'ai' },
   ],
-  mute: [
-    { icon: '🗣️', label: 'Speech Support', id: 'speech' },
-    { icon: '🔊', label: 'Voice Generator', id: 'vocalize'      },
-    { icon: '💬', label: 'Chat Bridge',   id: 'chatbridge'     },
+  personal: [
+    { icon: FileText, label: 'My Notes', id: 'notes' },
+    { icon: BarChart3, label: 'Analytics', id: 'progress' },
+    { icon: Settings, label: 'Settings', id: 'settings' },
   ],
-  all: [],
 };
 
 export default function Sidebar({ userType, active, setActive, theme, collapsed }) {
-  const dark  = theme === 'dark';
-  const extra = adaptiveItems[userType] || [];
+  const accessibilityItems = sections.accessibility[userType] || [];
 
-  const Item = ({ icon, label, id }) => {
+  const NavItem = ({ icon: Icon, label, id }) => {
     const isActive = active === id;
     return (
       <button
@@ -40,22 +47,22 @@ export default function Sidebar({ userType, active, setActive, theme, collapsed 
         aria-label={label}
         aria-current={isActive ? 'page' : undefined}
         className={[
-          'flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
+          'group flex items-center gap-3 w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
           isActive
-            ? 'bg-[#2F7EDA] text-white shadow-lg shadow-[#2F7EDA]/30 font-semibold'
-            : 'text-gray-400 hover:text-white hover:bg-[#1e293b]',
+            ? 'bg-blue-500/10 border-l-2 border-blue-500 text-white'
+            : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-2 border-transparent',
         ].join(' ')}
       >
-        <span className="text-xl shrink-0">{icon}</span>
+        <Icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
         {!collapsed && <span className="truncate">{label}</span>}
       </button>
     );
   };
 
-  const SectionTitle = ({ children }) => {
+  const SectionLabel = ({ children }) => {
     if (collapsed) return null;
     return (
-      <p className="text-xs font-bold uppercase px-4 mb-2 mt-4 text-gray-500 tracking-wider">
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 px-4 mb-2 mt-6">
         {children}
       </p>
     );
@@ -64,58 +71,66 @@ export default function Sidebar({ userType, active, setActive, theme, collapsed 
   return (
     <aside
       className={[
-        'flex flex-col py-6 h-full transition-all duration-300 border-r',
-        collapsed ? 'w-20 px-2' : 'w-64 px-3'
+        'bg-slate-900 text-slate-300 h-screen flex flex-col border-r border-slate-800 transition-all duration-300',
+        collapsed ? 'w-20' : 'w-64',
       ].join(' ')}
-      style={{ 
-        backgroundColor: dark ? '#0f172a' : '#0f172a',
-        borderColor: '#1e293b'
-      }}
       aria-label="Sidebar navigation"
     >
-      {/* Logo Section */}
+      {/* Logo */}
       {!collapsed && (
-        <div className="px-4 mb-6">
+        <div className="px-4 py-6 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2F7EDA] to-[#1a5bb8] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
               <span className="text-lg">🎓</span>
             </div>
             <div>
-              <p className="font-bold text-white text-sm">BoundlessEd</p>
-              <p className="text-xs text-gray-500">Learning Platform</p>
+              <p className="font-semibold text-white text-sm">BoundlessEd</p>
+              <p className="text-xs text-slate-500">Learning Platform</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto space-y-1">
-        {/* Multimodal Search Hub */}
-        <SectionTitle>🔍 Smart Search</SectionTitle>
-        <Item icon="🎙️" label="Voice Search" id="voicesearch" />
-        <Item icon="⌨️" label="Text Search" id="textsearch" />
-        <Item icon="🤟" label="Sign Language" id="signsearch" />
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {/* Smart Search */}
+        <SectionLabel>Smart Search</SectionLabel>
+        {sections.search.map((item) => (
+          <NavItem key={item.id} {...item} />
+        ))}
 
-        {/* Adaptive section */}
-        {extra.length > 0 && (
+        {/* Accessibility */}
+        {accessibilityItems.length > 0 && (
           <>
-            <SectionTitle>♿ Accessibility</SectionTitle>
-            {extra.map(i => <Item key={i.id} {...i} />)}
+            <SectionLabel>Accessibility</SectionLabel>
+            {accessibilityItems.map((item) => (
+              <NavItem key={item.id} {...item} />
+            ))}
           </>
         )}
 
-        {/* Common items */}
-        <SectionTitle>📋 Navigation</SectionTitle>
-        {commonItems.map(i => <Item key={i.id} {...i} />)}
+        {/* Core */}
+        <SectionLabel>Core</SectionLabel>
+        {sections.core.map((item) => (
+          <NavItem key={item.id} {...item} />
+        ))}
+
+        {/* Personal */}
+        <SectionLabel>Personal</SectionLabel>
+        {sections.personal.map((item) => (
+          <NavItem key={item.id} {...item} />
+        ))}
       </div>
 
-      {/* Footer */}
+      {/* Help Card */}
       {!collapsed && (
-        <div className="mt-4 px-4 py-3 rounded-xl bg-[#1e293b] border border-[#334155]">
-          <p className="text-xs text-gray-400 mb-1">Need Help?</p>
-          <button className="text-sm font-semibold text-[#2F7EDA] hover:text-[#1a5bb8] transition">
-            💬 Contact Support
-          </button>
+        <div className="p-4 border-t border-slate-800">
+          <div className="bg-white/5 backdrop-blur rounded-lg p-4 space-y-2">
+            <p className="text-xs font-medium text-slate-400">Need Help?</p>
+            <button className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors duration-200">
+              Contact Support →
+            </button>
+          </div>
         </div>
       )}
     </aside>
