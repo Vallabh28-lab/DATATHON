@@ -38,6 +38,7 @@ export default function Dashboard() {
         setTheme={setTheme}
         userType={userType}
         setUserType={handleUserType}
+        setActive={setActive}
         name={user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User'}
       />
 
@@ -57,13 +58,13 @@ export default function Dashboard() {
         <button
           onClick={() => setCollapsed(p => !p)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="fixed left-2 bottom-4 z-50 p-3 rounded-xl bg-[#0f172a] border border-white/20 text-white text-sm font-bold hover:bg-[#1e293b] shadow-lg transition"
+          className={['fixed left-6 bottom-8 z-50 p-4 rounded-2xl shadow-xl transition-all active:scale-90 flex items-center justify-center border', hc ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-100 text-slate-600'].join(' ')}
         >
           {collapsed ? '→' : '←'}
         </button>
 
         {/* Main */}
-        <MainContent active={active} theme={theme} />
+        <MainContent active={active} setActive={setActive} theme={theme} />
       </div>
     </div>
   );

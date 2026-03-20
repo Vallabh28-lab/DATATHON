@@ -1,138 +1,117 @@
 import React from 'react';
-import { Home, BookOpen, Bot, FileText, BarChart3, Settings, Mic, Search, Hand, Eye, Ear, MessageSquare, Volume2, Headphones } from 'lucide-react';
-
-const sections = {
-  search: [
-    { icon: Mic, label: 'Voice Search', id: 'voicesearch' },
-    { icon: Search, label: 'Text Search', id: 'textsearch' },
-    { icon: Hand, label: 'Sign Language', id: 'signsearch' },
-  ],
-  accessibility: {
-    blind: [
-      { icon: Eye, label: 'Vision Support', id: 'vision' },
-      { icon: Volume2, label: 'Text to Speech', id: 'tts' },
-      { icon: Headphones, label: 'Audio Library', id: 'audio' },
-    ],
-    deaf: [
-      { icon: Ear, label: 'Hearing Support', id: 'hearing' },
-      { icon: FileText, label: 'Live Transcription', id: 'stt' },
-      { icon: MessageSquare, label: 'Live Captions', id: 'subtitles' },
-    ],
-    mute: [
-      { icon: MessageSquare, label: 'Speech Support', id: 'speech' },
-      { icon: Volume2, label: 'Voice Generator', id: 'vocalize' },
-      { icon: MessageSquare, label: 'Chat Bridge', id: 'chatbridge' },
-    ],
-  },
-  core: [
-    { icon: Home, label: 'Dashboard', id: 'dashboard' },
-    { icon: BookOpen, label: 'My Courses', id: 'courses' },
-    { icon: Bot, label: 'AI Assistant', id: 'ai' },
-  ],
-  personal: [
-    { icon: FileText, label: 'My Notes', id: 'notes' },
-    { icon: BarChart3, label: 'Analytics', id: 'progress' },
-    { icon: Settings, label: 'Settings', id: 'settings' },
-  ],
-};
+import { 
+  Sparkles, Volume2, Image, Hand, Gamepad2, FileEdit,
+  FileText, BarChart3, Settings,
+  LogOut, LayoutDashboard
+} from 'lucide-react';
 
 export default function Sidebar({ userType, active, setActive, theme, collapsed }) {
-  const accessibilityItems = sections.accessibility[userType] || [];
+  const dark = theme === 'dark';
 
-  const NavItem = ({ icon: Icon, label, id }) => {
-    const isActive = active === id;
+  const menuItems = [
+    { id: 'ai', label: 'AI Assistant', icon: Sparkles, color: 'text-purple-500' },
+    { id: 'texttospeech', label: 'Text to Speech', icon: Volume2, color: 'text-blue-500' },
+    { id: 'texttovisuals', label: 'Text to Visuals', icon: Image, color: 'text-indigo-500' },
+    { id: 'texttosign', label: 'Text to Sign Language', icon: Hand, color: 'text-emerald-500' },
+    { id: 'gamified', label: 'Gamified Study', icon: Gamepad2, color: 'text-orange-500' },
+    { id: 'simplify', label: 'Simplify Text', icon: FileEdit, color: 'text-cyan-500' },
+    { id: 'notes', label: 'Study Notes', icon: FileText, color: 'text-slate-500' },
+    { id: 'progress', label: 'Analytics', icon: BarChart3, color: 'text-pink-500' },
+  ];
+
+  const systemItems = [
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  const NavItem = ({ item }) => {
+    const isActive = active === item.id;
     return (
       <button
-        onClick={() => setActive(id)}
-        aria-label={label}
-        aria-current={isActive ? 'page' : undefined}
+        key={item.id}
+        onClick={() => setActive(item.id)}
         className={[
-          'group flex items-center gap-3 w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-          isActive
-            ? 'bg-blue-500/10 border-l-2 border-blue-500 text-white'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-2 border-transparent',
+          'w-full flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all relative group',
+          isActive 
+            ? (dark ? 'bg-slate-800 text-white shadow-lg shadow-black/20' : 'bg-blue-50 text-blue-600 shadow-sm')
+            : (dark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50')
         ].join(' ')}
       >
-        <Icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
-        {!collapsed && <span className="truncate">{label}</span>}
+        <item.icon size={22} className={isActive ? item.color : 'text-slate-400 group-hover:scale-110 transition-transform'} />
+        {!collapsed && (
+          <span className="text-sm font-bold tracking-tight">{item.label}</span>
+        )}
+        {isActive && (
+          <div className="absolute right-2 w-1.5 h-6 rounded-full bg-blue-600 animate-in fade-in zoom-in" />
+        )}
       </button>
     );
   };
 
-  const SectionLabel = ({ children }) => {
-    if (collapsed) return null;
-    return (
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 px-4 mb-2 mt-6">
-        {children}
-      </p>
-    );
-  };
-
   return (
-    <aside
+    <aside 
       className={[
-        'bg-slate-900 text-slate-300 h-screen flex flex-col border-r border-slate-800 transition-all duration-300',
-        collapsed ? 'w-20' : 'w-64',
+        'flex flex-col border-r transition-all duration-500 ease-in-out z-40 relative group/sidebar',
+        collapsed ? 'w-20' : 'w-72',
+        dark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
       ].join(' ')}
-      aria-label="Sidebar navigation"
     >
-      {/* Logo */}
-      {!collapsed && (
-        <div className="px-4 py-6 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <span className="text-lg">🎓</span>
-            </div>
-            <div>
-              <p className="font-semibold text-white text-sm">BoundlessEd</p>
-              <p className="text-xs text-slate-500">Learning Platform</p>
-            </div>
+      {/* Brand Header */}
+      <div className="h-20 flex items-center px-6 border-b border-transparent">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 shrink-0">
+            <h1 className="text-xl font-black">B</h1>
           </div>
+          {!collapsed && (
+            <span className={['text-lg font-black tracking-tight', dark ? 'text-white' : 'text-slate-900'].join(' ')}>
+              BoundlessEd
+            </span>
+          )}
         </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {/* Smart Search */}
-        <SectionLabel>Smart Search</SectionLabel>
-        {sections.search.map((item) => (
-          <NavItem key={item.id} {...item} />
-        ))}
-
-        {/* Accessibility */}
-        {accessibilityItems.length > 0 && (
-          <>
-            <SectionLabel>Accessibility</SectionLabel>
-            {accessibilityItems.map((item) => (
-              <NavItem key={item.id} {...item} />
-            ))}
-          </>
-        )}
-
-        {/* Core */}
-        <SectionLabel>Core</SectionLabel>
-        {sections.core.map((item) => (
-          <NavItem key={item.id} {...item} />
-        ))}
-
-        {/* Personal */}
-        <SectionLabel>Personal</SectionLabel>
-        {sections.personal.map((item) => (
-          <NavItem key={item.id} {...item} />
-        ))}
       </div>
 
-      {/* Help Card */}
-      {!collapsed && (
-        <div className="p-4 border-t border-slate-800">
-          <div className="bg-white/5 backdrop-blur rounded-lg p-4 space-y-2">
-            <p className="text-xs font-medium text-slate-400">Need Help?</p>
-            <button className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors duration-200">
-              Contact Support →
-            </button>
-          </div>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-4 space-y-8 scrollbar-hide">
+        {/* Essential Navigation */}
+        <div className="space-y-1">
+          {!collapsed && (
+            <p className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+              Learning Tools
+            </p>
+          )}
+          {menuItems.map((item) => (
+            <NavItem key={item.id} item={item} />
+          ))}
         </div>
-      )}
+
+        {/* System Settings */}
+        <div className="space-y-1">
+          {!collapsed && (
+            <p className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+              Preferences
+            </p>
+          )}
+          {systemItems.map((item) => (
+            <NavItem key={item.id} item={item} />
+          ))}
+        </div>
+      </div>
+
+      {/* Mini Profile / Logout Section */}
+      <div className="p-6 border-t border-slate-100/50 dark:border-slate-800">
+        <button 
+          className="w-full flex items-center gap-4 p-2 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/10 text-slate-400 hover:text-red-500 transition-all group"
+          onClick={() => console.log('logout')}
+        >
+          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 group-hover:bg-red-100 dark:group-hover:bg-red-900/20 transition-colors">
+            <LogOut size={18} />
+          </div>
+          {!collapsed && (
+            <div className="text-left">
+              <p className="text-xs font-black tracking-tight uppercase">Logout</p>
+              <p className="text-[10px] font-bold text-slate-400">Exit Session</p>
+            </div>
+          )}
+        </button>
+      </div>
     </aside>
   );
 }
