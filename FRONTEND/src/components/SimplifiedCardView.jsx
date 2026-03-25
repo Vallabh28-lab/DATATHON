@@ -11,7 +11,8 @@ export default function SimplifiedCardView({ steps, onExit, theme }) {
 
   // Fetch Visual Anchor (Keyword + Image) when the step changes
   useEffect(() => {
-    if (steps && steps[currentStep]) {
+    if (steps && steps[currentStep]) 
+      {
       const fetchVisualAnchor = async () => {
         setLoadingImage(true);
         try {
