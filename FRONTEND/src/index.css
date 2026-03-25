@@ -1,0 +1,318 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased text-slate-900 bg-[#f8fafc];
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* Premium SaaS Typography */
+  .font-hero {
+    font-family: "Helvetica Neue", Helvetica, Arial, "Inter", sans-serif;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+  }
+
+  .text-clamp-hero {
+    font-size: clamp(3rem, 10vw, 8rem);
+  }
+
+  .tracking-tight-extreme {
+    letter-spacing: -0.05em;
+  }
+  
+  /* High Contrast Mode Overrides */
+  .theme-high-contrast {
+    @apply bg-black text-white;
+  }
+  .theme-high-contrast * {
+    @apply border-white;
+  }
+  .theme-high-contrast button {
+    @apply bg-yellow-400 text-black border-2 border-yellow-400 font-bold hover:bg-yellow-500;
+  }
+  .theme-high-contrast input {
+    @apply bg-black text-white border-2 border-white focus:ring-yellow-400 focus:border-yellow-400;
+  }
+  .theme-high-contrast a {
+    @apply text-yellow-400 underline;
+  }
+  .theme-high-contrast .panel-left {
+    @apply bg-black border-r-4 border-white text-white;
+  }
+  .theme-high-contrast .panel-right {
+    @apply bg-black text-white;
+  }
+  .theme-high-contrast .high-contrast-card {
+    @apply bg-black border-2 border-white;
+  }
+  .theme-high-contrast .text-primary-600 {
+    @apply text-yellow-400;
+  }
+  .theme-high-contrast .bg-primary-600 {
+    @apply bg-yellow-400 text-black;
+    /* AI Assistant Recording Visuals */
+  @keyframes pulse-recording {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .recording-pulse {
+    animation: pulse-recording 1.5s infinite ease-in-out;
+  }
+
+  @keyframes wave-bar {
+    0%, 100% { height: 4px; }
+    50% { height: 16px; }
+  }
+
+  .wave-bar {
+    display: inline-block;
+    width: 3px;
+    background-color: #3b82f6;
+    border-radius: 99px;
+    animation: wave-bar 1s infinite ease-in-out;
+  }
+
+  .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+  .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+  .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+  .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+
+  /* Typing Dot Animation */
+  @keyframes typing-dot {
+    0%, 20% { transform: translateY(0); opacity: 0.3; }
+    50% { transform: translateY(-4px); opacity: 1; }
+    80%, 100% { transform: translateY(0); opacity: 0.3; }
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    background-color: currentColor;
+    border-radius: 50%;
+    display: inline-block;
+    animation: typing-dot 1.2s infinite ease-in-out;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+}
+
+  /* ═══════════ Text-to-Speech Reader ═══════════ */
+
+  /* Sentence Highlight — Bright Yellow Active Tracking */
+  .tts-highlight {
+    background: #FFFF00 !important; /* Pure Bright Yellow */
+    color: #000000 !important;
+    border-radius: 6px;
+    padding: 2px 4px;
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.6), 0 0 0 3px rgba(255, 255, 0, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 700;
+  }
+
+  .tts-sentence:hover {
+    background: rgba(250, 204, 21, 0.12);
+    border-radius: 6px;
+  }
+
+  /* Sticky FAB Bar — Glassmorphism */
+  .tts-fab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(92vw, 880px);
+    z-index: 100;
+    padding-bottom: 24px;
+  }
+
+  .tts-fab-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Playback Buttons */
+  .tts-ctrl-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tts-ctrl-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+    transform: scale(1.08);
+  }
+
+  .tts-play-btn {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    border: none;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  }
+  .tts-play-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  }
+  .tts-play-btn--active {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+  }
+  .tts-play-btn--active:hover {
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  }
+
+  /* Waveform Visualizer */
+  .tts-waveform {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 28px;
+    padding: 0 4px;
+  }
+
+  .tts-wave-bar {
+    display: inline-block;
+    width: 4px;
+    height: 6px;
+    background: #94a3b8;
+    border-radius: 99px;
+    transition: background 0.3s;
+  }
+
+  .tts-wave-bar--active {
+    background: linear-gradient(180deg, #3b82f6, #6366f1);
+    animation: tts-waveform-bounce 0.6s infinite ease-in-out alternate;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  }
+
+  @keyframes tts-waveform-bounce {
+    0% {
+      height: 6px;
+    }
+    100% {
+      height: 24px;
+    }
+  }
+
+  /* Speed Buttons */
+  .tts-speed-btn {
+    padding: 6px 10px;
+    border-radius: 12px;
+    border: 1.5px solid transparent;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    line-height: 1;
+  }
+  .tts-speed-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+  }
+  .tts-speed-btn--active {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  }
+
+  /* Dark mode overrides */
+  @media (prefers-color-scheme: dark) {
+    .tts-fab-inner {
+      background: rgba(15, 23, 42, 0.85);
+      border-color: rgba(51, 65, 85, 0.4);
+    }
+    .tts-ctrl-btn { background: #1e293b; color: #94a3b8; }
+    .tts-ctrl-btn:hover { background: #334155; color: #e2e8f0; }
+    .tts-speed-btn { background: #1e293b; color: #94a3b8; }
+    .tts-speed-btn:hover { background: #334155; color: #e2e8f0; }
+    .tts-wave-bar { background: #475569; }
+  }
+
+  /* ═══════════ End TTS Reader Styles ═══════════ */
+
+  /* Large Text Mode Overrides */
+  .theme-large-text {
+    font-size: 115%;
+  }
+  .theme-large-text h1 {
+    @apply text-5xl;
+  }
+  .theme-large-text h2 {
+    @apply text-4xl;
+  }
+  .theme-large-text p, .theme-large-text input, .theme-large-text button {
+    @apply text-xl;
+  }
+
+  /* ═══════════ Focus Mode (Simplified View) ═══════════ */
+
+  .font-focus-mode {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
+    letter-spacing: -0.01em;
+    line-height: 1.8;
+  }
+
+  .focus-mode-active {
+    @apply transition-all duration-700 ease-in-out;
+  }
+
+  /* Distraction Removal */
+  .focus-mode-active .sidebar-distraction,
+  .focus-mode-active aside {
+    display: none !important;
+  }
+
+  /* Step-by-Step Card Animations */
+  @keyframes slide-up-card {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .simplified-card-animate {
+    animation: slide-up-card 0.5s ease-out forwards;
+  }
+
+  /* Premium Focus Mode Font (OpenDyslexic Fallback) */
+  @font-face {
+    font-family: 'OpenDyslexic';
+    src: url('https://antigravity-assets.s3.amazonaws.com/fonts/OpenDyslexic-Regular.otf');
+    font-weight: normal;
+    font-style: normal;
+  }
+}

@@ -1,0 +1,25 @@
+Google Translate
+
+Goole one
+
+Google Classroom
+
+Google Analytics
+
+NotebookLM
+
+................. MODELS ---------------------
+Feature	Primary Model (Recommended)	Alternative (Lightweight)
+Text Simplification	    BART-Large-CNN	            T5-Base
+Text to Speech (TTS)	Kokoro-82M	                Piper
+Text to Visuals	        Stable Diffusion v1.5	    Tiny-Stable-Diffusion
+Text to Sign Language	MediaPipe (Framework)   	Sign-Language-Translator
+Gamified Quizzes	    Questgen (T5)	            Text2Quiz (BART)   -----------  (  Google's FLAN-T5-Small. )
+
+
+
+-------- GAMIFIED STUDY ------------- ( intellectual impired students)
+1) MCQ Generation
+2) True/False Quests
+3) FAQ Generation
+4) Answer Extraction:
