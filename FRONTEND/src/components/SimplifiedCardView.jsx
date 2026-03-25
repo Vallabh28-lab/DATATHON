@@ -60,7 +60,7 @@ export default function SimplifiedCardView({ steps, onExit, theme }) {
           </span>
         </div>
         <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500 shadow-lg shadow-blue-500/20"
             style={{ width: `${progress}%` }}
           />
@@ -69,15 +69,15 @@ export default function SimplifiedCardView({ steps, onExit, theme }) {
 
       {/* Visual Anchor - AI Identifies the most important object */}
       <div className="w-full max-w-2xl flex flex-col md:flex-row gap-8 items-center">
-        
+
         {/* The Actionable Card */}
         <div className={[
           "relative flex-1 min-h-[300px] p-10 rounded-[2.5rem] border transition-all duration-500 flex flex-col justify-center text-center",
-          dark 
-            ? "bg-slate-900 border-slate-800 shadow-2xl" 
+          dark
+            ? "bg-slate-900 border-slate-800 shadow-2xl"
             : "bg-white border-slate-100 shadow-2xl shadow-slate-200/50"
         ].join(' ')}>
-          
+
           <div className="absolute -top-6 left-10 w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/40">
             <Sparkles size={24} />
           </div>
@@ -110,10 +110,10 @@ export default function SimplifiedCardView({ steps, onExit, theme }) {
               </div>
             ) : imageUrl ? (
               <>
-                <img 
-                  src={imageUrl} 
-                  alt={keyword} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                <img
+                  src={imageUrl}
+                  alt={keyword}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   key={imageUrl}
                 />
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-4">
