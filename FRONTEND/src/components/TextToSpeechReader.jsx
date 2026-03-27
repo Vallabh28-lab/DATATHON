@@ -23,7 +23,7 @@ export default function TextToSpeechReader() {
     if (synth.onvoiceschanged !== undefined) {
       synth.onvoiceschanged = loadVoices;
     }
-    
+
     return () => {
       synth.cancel();
     }
@@ -50,20 +50,20 @@ export default function TextToSpeechReader() {
     }
 
     if (synth.paused && utteranceRef.current) {
-        synth.resume();
-        setIsReading(true);
-        setStatus("Reading Aloud...");
-        return;
+      synth.resume();
+      setIsReading(true);
+      setStatus("Reading Aloud...");
+      return;
     }
 
     if (text) {
       synth.cancel(); // Clear any hung process
       const utterance = new SpeechSynthesisUtterance(text);
       if (voices.length > 0) {
-          utterance.voice = voices[voice] || voices[0];
+        utterance.voice = voices[voice] || voices[0];
       }
       utterance.rate = speed;
-      
+
       utterance.onend = () => {
         setIsReading(false);
         setStatus("Finished Reading");
@@ -89,11 +89,11 @@ export default function TextToSpeechReader() {
     setStatus("Stopped");
     utteranceRef.current = null;
   };
-  
+
   const handleClear = () => {
-      setText("");
-      handleStop();
-      setStatus("System Ready");
+    setText("");
+    handleStop();
+    setStatus("System Ready");
   };
 
   return (
@@ -108,20 +108,20 @@ export default function TextToSpeechReader() {
               Input text manually or upload a PDF document.
             </p>
           </div>
-          
-          <button 
+
+          <button
             className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-2xl font-semibold flex items-center gap-2.5 shadow-lg shadow-blue-600/20 transition-all transform hover:-translate-y-0.5"
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={20} />
             <span>Upload PDF</span>
           </button>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            accept=".pdf" 
-            className="hidden" 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".pdf"
+            className="hidden"
           />
         </header>
 
@@ -132,22 +132,22 @@ export default function TextToSpeechReader() {
             onChange={(e) => setText(e.target.value)}
             placeholder="Type your text here to convert it to speech..."
           />
-          
+
           <div className="flex items-center justify-center gap-5">
-            <button 
+            <button
               className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 border-none px-6 py-3 rounded-full font-semibold cursor-pointer transition-colors"
               onClick={handleClear}
             >
               Clear
             </button>
-            <button 
+            <button
               className="bg-blue-600 hover:bg-blue-700 text-white w-16 h-16 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-105 shadow-lg shadow-blue-600/30"
               onClick={handleSpeak}
               title={isReading ? "Pause" : "Play"}
             >
               {isReading ? <Pause size={28} className="fill-current" /> : <Play size={28} className="fill-current ml-1" />}
             </button>
-            <button 
+            <button
               className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 border-none px-6 py-3 rounded-full font-semibold cursor-pointer transition-colors"
               onClick={handleStop}
             >
@@ -167,12 +167,12 @@ export default function TextToSpeechReader() {
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">
               Playback Speed ({speed}x)
             </label>
-            <input 
-              type="range" 
-              min="0.5" 
-              max="2" 
-              step="0.1" 
-              value={speed} 
+            <input
+              type="range"
+              min="0.5"
+              max="2"
+              step="0.1"
+              value={speed}
               onChange={(e) => setSpeed(Number(e.target.value))}
               className="w-full accent-blue-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none"
             />
@@ -181,9 +181,9 @@ export default function TextToSpeechReader() {
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">
               Select Voice
             </label>
-            <select 
+            <select
               className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-xl p-3.5 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-shadow cursor-pointer"
-              value={voice} 
+              value={voice}
               onChange={(e) => setVoice(Number(e.target.value))}
             >
               {voices.length > 0 ? voices.map((v, index) => (
