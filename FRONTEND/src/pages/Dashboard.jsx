@@ -1,16 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '@clerk/react';
 import Navbar      from '../components/Navbar';
 import Sidebar     from '../components/Sidebar';
 import MainContent from '../components/MainContent';
 
+const pathMap = {
+  '/ai-assistant': 'ai',
+  '/text-to-speech': 'texttospeech',
+  '/text-to-visuals': 'texttovisuals',
+  '/text-to-sign-language': 'signlang',
+  '/gamified-study': 'gamified',
+  '/simplify-text': 'simplify',
+  '/study-notes': 'notes',
+  '/settings': 'settings'
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoaded } = useUser();
   const [theme, setTheme] = useState('light');
   const [userType, setUserType] = useState(localStorage.getItem('userType') || 'all');
-  const [active, setActive] = useState('dashboard');
+  const active = pathMap[location.pathname] || 'simplify';
+  
+  const setActive = (pathId) => {
+    // Helper so MainContent can still navigate internally if it uses setActive
+    const reverseMap = Object.entries(pathMap).find(([path, id]) => id === pathId);
+    if (reverseMap) {
+      navigate(reverseMap[0]);
+    } else {
+      navigate('/simplify-text');
+    }
+  };
   const [collapsed, setCollapsed] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
 

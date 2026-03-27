@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { 
   Sparkles, Volume2, Image, Hand, Gamepad2, FileEdit,
   FileText, BarChart3, Settings,
@@ -9,41 +10,40 @@ export default function Sidebar({ userType, active, setActive, theme, collapsed 
   const dark = theme === 'dark';
 
   const menuItems = [
-    { id: 'ai', label: 'AI Assistant', icon: Sparkles, color: 'text-purple-500' },
-    { id: 'texttospeech', label: 'Text to Speech', icon: Volume2, color: 'text-blue-500' },
-    { id: 'texttovisuals', label: 'Text to Visuals', icon: Image, color: 'text-indigo-500' },
-{ id: 'signlang', label: 'Sign Language to Text', icon: Hand, color: 'text-cyan-500' },
-    { id: 'gamified', label: 'Gamified Study', icon: Gamepad2, color: 'text-orange-500' },
-    { id: 'simplify', label: 'Simplify Text', icon: FileEdit, color: 'text-cyan-500' },
-    { id: 'notes', label: 'Study Notes', icon: FileText, color: 'text-slate-500' },
-    { id: 'progress', label: 'Analytics', icon: BarChart3, color: 'text-pink-500' },
+    { path: '/ai-assistant', label: 'AI Assistant', icon: Sparkles },
+    { path: '/text-to-speech', label: 'Text to Speech', icon: Volume2 },
+    { path: '/text-to-visuals', label: 'Text to Visuals', icon: Image },
+    { path: '/text-to-sign-language', label: 'Text to Sign Language', icon: Hand },
+    { path: '/gamified-study', label: 'Gamified Study', icon: Gamepad2 },
+    { path: '/simplify-text', label: 'Simplify Text', icon: FileEdit },
+    { path: '/study-notes', label: 'Study Notes', icon: FileText },
   ];
 
   const systemItems = [
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
   const NavItem = ({ item }) => {
-    const isActive = active === item.id;
     return (
-      <button
-        key={item.id}
-        onClick={() => setActive(item.id)}
-        className={[
-          'w-full flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all relative group',
+      <NavLink
+        key={item.path}
+        to={item.path}
+        className={({ isActive }) => [
+          'w-full flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all relative group border-r-4',
           isActive 
-            ? (dark ? 'bg-slate-800 text-white shadow-lg shadow-black/20' : 'bg-blue-50 text-blue-600 shadow-sm')
-            : (dark ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50')
+            ? 'bg-[#f0f7ff] border-blue-600 text-blue-600 shadow-sm'
+            : (dark ? 'border-transparent text-slate-400 hover:text-blue-500 hover:bg-slate-800/50' : 'border-transparent text-slate-500 hover:text-blue-500 hover:bg-slate-50')
         ].join(' ')}
       >
-        <item.icon size={22} className={isActive ? item.color : 'text-slate-400 group-hover:scale-110 transition-transform'} />
-        {!collapsed && (
-          <span className="text-sm font-bold tracking-tight">{item.label}</span>
+        {({ isActive }) => (
+          <>
+            <item.icon size={22} className={isActive ? 'text-blue-600' : 'text-slate-400 group-hover:scale-110 group-hover:text-blue-500 transition-all'} />
+            {!collapsed && (
+              <span className={`text-sm tracking-tight ${isActive ? 'font-black' : 'font-bold'}`}>{item.label}</span>
+            )}
+          </>
         )}
-        {isActive && (
-          <div className="absolute right-2 w-1.5 h-6 rounded-full bg-blue-600 animate-in fade-in zoom-in" />
-        )}
-      </button>
+      </NavLink>
     );
   };
 
@@ -78,7 +78,7 @@ export default function Sidebar({ userType, active, setActive, theme, collapsed 
             </p>
           )}
           {menuItems.map((item) => (
-            <NavItem key={item.id} item={item} />
+            <NavItem key={item.path} item={item} />
           ))}
         </div>
 
@@ -90,7 +90,7 @@ export default function Sidebar({ userType, active, setActive, theme, collapsed 
             </p>
           )}
           {systemItems.map((item) => (
-            <NavItem key={item.id} item={item} />
+            <NavItem key={item.path} item={item} />
           ))}
         </div>
       </div>

@@ -9,7 +9,7 @@ function AuthLayout() {
   const { isSignedIn } = useAuth();
 
   if (isSignedIn) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/simplify-text" replace />;
   }
 
   return (
@@ -38,7 +38,7 @@ function AuthLayout() {
         <div className="auth-box">
           {isSignUp ? (
             <SignUp
-              afterSignUpUrl="/dashboard"
+              afterSignUpUrl="/simplify-text"
               appearance={{
                 elements: {
                   rootBox: 'w-full',
@@ -48,7 +48,7 @@ function AuthLayout() {
             />
           ) : (
             <SignIn
-              afterSignInUrl="/dashboard"
+              afterSignInUrl="/simplify-text"
               appearance={{
                 elements: {
                   rootBox: 'w-full',
@@ -80,7 +80,16 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<AuthLayout />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Navigate to="/simplify-text" replace />} />
+        <Route path="/ai-assistant" element={<Dashboard />} />
+        <Route path="/text-to-speech" element={<Dashboard />} />
+        <Route path="/text-to-visuals" element={<Dashboard />} />
+        <Route path="/text-to-sign-language" element={<Dashboard />} />
+        <Route path="/gamified-study" element={<Dashboard />} />
+        <Route path="/simplify-text" element={<Dashboard />} />
+        <Route path="/study-notes" element={<Dashboard />} />
+        <Route path="/settings" element={<Dashboard />} />
+        <Route path="*" element={<Navigate to="/simplify-text" replace />} />
       </Routes>
     </BrowserRouter>
   );
