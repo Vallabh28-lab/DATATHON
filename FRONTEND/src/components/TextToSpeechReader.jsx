@@ -1,582 +1,178 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Play, Pause, Square, Volume2, SkipBack, SkipForward, Sparkles } from 'lucide-react';
-import SimplifiedCardView from './SimplifiedCardView';
-import { askAI } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, RotateCcw, RotateCw } from 'lucide-react';
 
-// ---------- Sample Lesson Content ----------
 const LESSON_TITLE = "Understanding Web Accessibility";
-const LESSON_SUBTITLE = "Module 3 — Perceivable Content for Every Learner";
 
-const LESSON_PARAGRAPHS = [
-  {
-    heading: "What is Web Accessibility?",
-    sentences: [
-      "Web accessibility means that websites, tools, and technologies are designed and developed so that people with disabilities can use them.",
-      "More specifically, people can perceive, understand, navigate, and interact with the Web.",
-      "Web accessibility encompasses all disabilities that affect access to the Web, including auditory, cognitive, neurological, physical, speech, and visual disabilities.",
-      "Accessibility also benefits people without disabilities, for example, people using mobile phones or those with slow network connections.",
-    ],
-  },
-  {
-    heading: "The POUR Principles",
-    sentences: [
-      "The Web Content Accessibility Guidelines, commonly known as WCAG, are organized around four principles often called POUR.",
-      "Perceivable means that information and user interface components must be presentable to users in ways they can perceive.",
-      "Operable means that user interface components and navigation must be operable by everyone.",
-      "Understandable means that information and the operation of the user interface must be understandable.",
-      "Robust means that content must be robust enough to be interpreted reliably by a wide variety of user agents, including assistive technologies.",
-    ],
-  },
-  {
-    heading: "Why Accessibility Matters",
-    sentences: [
-      "The power of the Web is in its universality, and access by everyone regardless of disability is an essential aspect.",
-      "Over one billion people, about fifteen percent of the world's population, have some form of disability.",
-      "An accessible Web empowers people with disabilities to participate more actively in society.",
-      "Accessibility overlaps with other best practices such as mobile web design, usability, and search engine optimization.",
-      "Many countries have laws requiring digital accessibility, making it both a moral and legal imperative.",
-    ],
-  },
-  {
-    heading: "Assistive Technologies in Education",
-    sentences: [
-      "Screen readers convert digital text into synthesized speech or Braille output for visually impaired students.",
-      "Text-to-speech tools help students with dyslexia or reading difficulties by reading content aloud.",
-      "Closed captions and real-time subtitles ensure that deaf and hard-of-hearing students can follow lectures.",
-      "Alternative input devices such as eye trackers and switch controls enable students with motor disabilities to navigate learning platforms.",
-      "Accessible educational technology creates an inclusive environment where every student can thrive.",
-    ],
-  },
+const LESSON_SENTENCES = [
+  "Web accessibility means that websites, tools, and technologies are designed and developed so that people with disabilities can use them.",
+  "More specifically, people can perceive, understand, navigate, and interact with the Web.",
+  "Web accessibility encompasses all disabilities that affect access to the Web, including auditory, cognitive, neurological, physical, speech, and visual disabilities.",
+  "Accessibility also benefits people without disabilities, for example, people using mobile phones or those with slow network connections."
 ];
 
-// Flatten all sentences for sequential TTS
-const ALL_SENTENCES = LESSON_PARAGRAPHS.flatMap((p) => p.sentences);
+// Web Audio Context for Earcon Generation
+let globalAudioCtx = null;
+let lastEarconTime = 0;
 
-export default function TextToSpeechReader({ focusMode, theme }) {
-  const SPEEDS = [
-    { label: '0.75×', value: 0.75, title: 'Slow' },
-    { label: '1×', value: 1, title: 'Normal' },
-    { label: '1.5×', value: 1.5, title: 'Fast' },
-    { label: '2×', value: 2, title: 'Very Fast' },
-  ];
+const playEarcon = () => {
+  const now = Date.now();
+  // Debounce rapidly sequenced click/focus to prevent double-beeps
+  if (now - lastEarconTime < 100) return; 
+  lastEarconTime = now;
 
+  // Haptic feedback
+  if (navigator.vibrate) {
+    navigator.vibrate(50);
+  }
+
+  // Audio earcon beep
+  try {
+    if (!globalAudioCtx) {
+      globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (globalAudioCtx.state === 'suspended') {
+      globalAudioCtx.resume();
+    }
+    const oscillator = globalAudioCtx.createOscillator();
+    const gainNode = globalAudioCtx.createGain();
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(600, globalAudioCtx.currentTime); // Pleasant mid-high beep
+    
+    gainNode.gain.setValueAtTime(0.05, globalAudioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, globalAudioCtx.currentTime + 0.15);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(globalAudioCtx.destination);
+    
+    oscillator.start();
+    oscillator.stop(globalAudioCtx.currentTime + 0.15);
+  } catch (err) {
+    // Graceful fallback if audio context blocked or not supported
+  }
+};
+
+export default function TextToSpeechReader() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const [speed, setSpeed] = useState(1);
-  const [volume, setVolume] = useState(1);
-  const [selectedVoice, setSelectedVoice] = useState(null);
-  const [voices, setVoices] = useState([]);
-  const [loop, setLoop] = useState(false);
-  const [useCustomText, setUseCustomText] = useState(false);
-  const [customText, setCustomText] = useState('');
-  const [allText, setAllText] = useState(ALL_SENTENCES);
-  const textareaRef = useRef(null);
-  
-  // Simplified View Data
-  const [simplifiedSteps, setSimplifiedSteps] = useState([]);
-  const [loadingSimplified, setLoadingSimplified] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('Lesson ready. Press Spacebar to play.');
 
-  const utteranceRef = useRef(null);
-  const indexRef = useRef(-1);
-const speedRef = useRef(1);
-  const volumeRef = useRef(1);
-  const isPlayingRef = useRef(false);
-  const sentenceRefs = useRef([]);
+  const handlePlayPause = () => {
+    playEarcon();
+    setIsPlaying((prev) => {
+      const nextPlayState = !prev;
+      setStatusMessage(nextPlayState ? 'Playing Audio Lesson' : 'Audio Paused');
+      return nextPlayState;
+    });
+  };
 
-  // Web Audio Visualizer
-  const audioContextRef = useRef(null);
-  const analyserRef = useRef(null);
-  const canvasRef = useRef(null);
-  const animationIdRef = useRef(null);
-  const visualizerRafRef = useRef(null);
-  const dataArrayRef = useRef(null);
+  const handleRewind = () => {
+    playEarcon();
+    setStatusMessage('Rewound Audio 10 seconds');
+  };
 
-// Keep refs in sync
-  useEffect(() => { speedRef.current = speed; }, [speed]);
-  useEffect(() => { volumeRef.current = volume; }, [volume]);
-  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+  const handleForward = () => {
+    playEarcon();
+    setStatusMessage('Skipped Forward Audio 10 seconds');
+  };
 
-  // Load voices
+  // Keyboard Global Listeners
   useEffect(() => {
-    const loadVoices = () => {
-      const availableVoices = speechSynthesis.getVoices();
-      setVoices(availableVoices.filter(v => v.lang.startsWith('en')));
-    };
-    loadVoices();
-    speechSynthesis.onvoiceschanged = loadVoices;
-  }, []);
+    const handleKeyDown = (e) => {
+      // Ignore if user is typing in a generic input (if they existed)
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
-  // Web Audio Visualizer Init
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    audioContextRef.current = audioContext;
-    analyserRef.current = analyser;
-    dataArrayRef.current = dataArray;
-
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    const ctx = canvas.getContext('2d');
-
-    const draw = () => {
-      if (!analyserRef.current || !dataArrayRef.current) return;
-
-      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const barWidth = (canvas.width / bufferLength) * 2.5;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArrayRef.current[i] / 255) * canvas.height * 0.8;
-        const r = barHeight + 25 * (i / bufferLength);
-        const g = 250 * (1 - i / bufferLength);
-        const b = 50;
-
-        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-        ctx.fillRect(x, canvas.height - barHeight / 2, barWidth, barHeight / 2);
-
-        x += barWidth + 1;
-      }
-
-      visualizerRafRef.current = requestAnimationFrame(draw);
-    };
-
-    animationIdRef.current = requestAnimationFrame(draw);
-
-    return () => {
-      if (animationIdRef.current) {
-        cancelAnimationFrame(animationIdRef.current);
+      if (e.code === 'Space') {
+        e.preventDefault(); 
+        handlePlayPause();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        handleRewind();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        handleForward();
       }
     };
-  }, []);
-
-  // Auto-scroll the highlighted sentence into view
-  useEffect(() => {
-    if (currentIndex >= 0 && sentenceRefs.current[currentIndex]) {
-      sentenceRefs.current[currentIndex].scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    }
-  }, [currentIndex]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      window.speechSynthesis.cancel();
-    };
-  }, []);
-
-  // Update allText when customText or lesson changes
-  useEffect(() => {
-    if (useCustomText) {
-      const sentences = customText.split(/[.!?]+/).filter(s => s.trim()).map(s => s.trim() + '.');
-      setAllText(sentences);
-    } else {
-      setAllText(ALL_SENTENCES);
-    }
-  }, [useCustomText, customText]);
-
-  // Fetch Simplified Steps when Focus Mode is active
-  useEffect(() => {
-    if (focusMode && simplifiedSteps.length === 0) {
-      const fetchSimplified = async () => {
-        setLoadingSimplified(true);
-        try {
-          const content = ALL_SENTENCES.join(' ');
-          const response = await askAI(content);
-          if (response.data && response.data.steps) {
-            setSimplifiedSteps(response.data.steps);
-          }
-        } catch (err) {
-          console.error("Failed to simplify:", err);
-        } finally {
-          setLoadingSimplified(false);
-        }
-      };
-      fetchSimplified();
-    }
-  }, [focusMode, simplifiedSteps.length]);
-
-const speakSentence = useCallback((index) => {
-    if (index >= allText.length) {
-      setIsPlaying(false);
-      setIsPaused(false);
-      setCurrentIndex(-1);
-      indexRef.current = -1;
-      return;
-    }
-
-    const utt = new SpeechSynthesisUtterance(allText[index]);
-    utt.lang = 'en-IN';
-    utt.rate = speedRef.current;
-    utt.volume = volumeRef ? volumeRef.current : 1;
-    if (selectedVoice) {
-      utt.voice = selectedVoice;
-    }
-
-    utt.onstart = () => {
-      setCurrentIndex(index);
-      indexRef.current = index;
-    };
-
-    utt.onend = () => {
-      if (isPlayingRef.current) {
-        if (index + 1 >= allText.length && loop) {
-          speakSentence(0);
-        } else if (index + 1 < allText.length) {
-          speakSentence(index + 1);
-        } else {
-          setIsPlaying(false);
-          setIsPaused(false);
-        }
-      }
-    };
-
-    utt.onerror = (e) => {
-      if (e.error !== 'interrupted' && e.error !== 'canceled') {
-        console.error('TTS Error:', e.error);
-      }
-    };
-
-    utteranceRef.current = utt;
-    window.speechSynthesis.speak(utt);
-  }, []);
-
-  // ---------- Controls ----------
-  const handlePlay = useCallback(() => {
-    if (isPaused) {
-      window.speechSynthesis.resume();
-      setIsPaused(false);
-      setIsPlaying(true);
-      return;
-    }
-    window.speechSynthesis.cancel();
-    setIsPlaying(true);
-    setIsPaused(false);
-    const startIdx = currentIndex >= 0 ? currentIndex : 0;
-    speakSentence(startIdx);
-  }, [isPaused, currentIndex, speakSentence]);
-
-  const handlePause = useCallback(() => {
-    window.speechSynthesis.pause();
-    setIsPaused(true);
-    setIsPlaying(false);
-  }, []);
-
-  const handleStop = useCallback(() => {
-    window.speechSynthesis.cancel();
-    setIsPlaying(false);
-    setIsPaused(false);
-    setCurrentIndex(-1);
-    indexRef.current = -1;
-  }, []);
-
-  const handlePrev = useCallback(() => {
-    const newIdx = Math.max(0, (currentIndex > 0 ? currentIndex : 1) - 1);
-    window.speechSynthesis.cancel();
-    setIsPlaying(true);
-    setIsPaused(false);
-    speakSentence(newIdx);
-  }, [currentIndex, speakSentence]);
-
-  const handleNext = useCallback(() => {
-    const newIdx = Math.min(allText.length - 1, (currentIndex >= 0 ? currentIndex : -1) + 1);
-    window.speechSynthesis.cancel();
-    setIsPlaying(true);
-    setIsPaused(false);
-    speakSentence(newIdx);
-  }, [currentIndex, speakSentence, allText.length]);
-
-  const handleSpeedChange = useCallback((val) => {
-    setSpeed(val);
-    // If currently speaking, restart the current sentence at new speed
-    if (isPlayingRef.current && indexRef.current >= 0) {
-      window.speechSynthesis.cancel();
-      setTimeout(() => speakSentence(indexRef.current), 50);
-    }
-  }, [speakSentence]);
-
-  // ---------- Sentence index mapping ----------
-  let globalIdx = 0;
-
-  const progress = currentIndex >= 0
-    ? Math.round(((currentIndex + 1) / allText.length) * 100)
-    : 0;
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []); // Safe empty dependency because updater functions are used
 
   return (
-    <div className={[
-      "tts-reader-root space-y-8 pb-40 transition-all duration-700 bg-gradient-to-b from-slate-900 via-gray-900 to-black min-h-screen",
-      focusMode ? "font-focus-mode focus-mode-active max-w-3xl mx-auto" : ""
-    ].join(' ')}>
-      {/* Input Toggle & Custom Text */}
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="flex gap-3 mb-6">
-          <button
-            onClick={() => setUseCustomText(false)}
-            className={`px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex-1 ${
-              !useCustomText 
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-xl shadow-cyan-500/30' 
-                : 'bg-white/10 backdrop-blur-sm text-white/80 border border-white/20 hover:bg-white/20'
-            }`}
-            aria-pressed={!useCustomText}
-          >
-            Lesson Content
-          </button>
-          <button
-            onClick={() => setUseCustomText(true)}
-            className={`px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex-1 ${
-              useCustomText 
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-xl shadow-cyan-500/30' 
-                : 'bg-white/10 backdrop-blur-sm text-white/80 border border-white/20 hover:bg-white/20'
-            }`}
-            aria-pressed={useCustomText}
-          >
-            Custom Text
-          </button>
-        </div>
+    <main className="min-h-screen bg-[#000000] text-[#FFFF00] p-8 md:p-16 pb-[600px] md:pb-[450px] font-sans selection:bg-[#FFFF00] selection:text-[#000000]">
+      {/* ARIA Live Region for Status Announcements */}
+      <div aria-live="assertive" className="sr-only" role="status" aria-atomic="true">
+        {statusMessage}
+      </div>
 
-        {useCustomText && (
-          <div 
-            className="w-full p-6 rounded-[2.5rem] bg-white/5 backdrop-blur-xl border-2 border-cyan-500/30 shadow-2xl shadow-cyan-500/20 mb-8 transition-all hover:shadow-cyan-500/40"
-            onDrop={(e) => {
-              e.preventDefault();
-              const text = e.dataTransfer.getData('text/plain');
-              setCustomText(text);
+      <header className="mb-16 max-w-7xl mx-auto">
+        <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight leading-[1.1] border-b-8 border-[#FFFF00] pb-8">
+          {LESSON_TITLE}
+        </h1>
+      </header>
+
+      <section className="space-y-12 max-w-7xl mx-auto" aria-label="Reading Content">
+        {LESSON_SENTENCES.map((sentence, idx) => (
+          <p 
+            key={idx}
+            tabIndex={0} 
+            onFocus={playEarcon}
+            className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.4] focus:outline-none focus:ring-8 focus:ring-yellow-400 p-6 md:p-8 -ml-6 md:-ml-8 rounded-[2rem] cursor-pointer hover:bg-[#FFFF00]/10 transition-colors"
+            onClick={() => {
+               playEarcon();
+               setIsPlaying(true);
+               setStatusMessage(`Playing from sentence ${idx + 1}`);
             }}
-            onDragOver={(e) => e.preventDefault()}
           >
-            <textarea
-              ref={textareaRef}
-              value={customText}
-              onChange={(e) => setCustomText(e.target.value)}
-              placeholder="Paste or type text here... Drag-drop files or copy-paste from anywhere!"
-              className="w-full h-48 p-6 bg-transparent border-none outline-none text-lg leading-relaxed text-white/95 placeholder-white/60 resize-vertical font-medium tracking-wide"
-              aria-label="Custom text input for TTS"
-            />
-          </div>
-        )}
-      </div> {/* Close max-w-4xl p-8 input container */}
+            {sentence}
+          </p>
+        ))}
+      </section>
 
-      {/* Header - Hide in Focus Mode */}
-      {!focusMode && (
-        <div className="pt-4 animate-in fade-in duration-700">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-2xl shadow-cyan-500/40 ring-2 ring-white/20">
-              <Volume2 size={32} />
-            </div>
-            <div>
-              <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-lg">
-                {LESSON_TITLE}
-              </h1>
-              <p className="text-sm font-bold text-cyan-200 uppercase tracking-widest mt-1 drop-shadow-md">
-                {LESSON_SUBTITLE}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Content Container - Premium Frosted Glass */}
-      <div className="max-w-4xl mx-auto p-12">
-        {/* Simplified View OR Standard View */}
-        {focusMode ? (
-          <SimplifiedCardView 
-            steps={simplifiedSteps} 
-            theme={theme} 
-            onExit={() => {}} 
-          />
-        ) : (
-          <div className="bg-white/5 backdrop-blur-2xl rounded-[3rem] border border-cyan-400/40 shadow-2xl shadow-cyan-500/30 p-12 overflow-hidden ring-1 ring-cyan-500/20">
-            <div className="space-y-6">
-              {allText.map((sentence, idx) => (
-                <div key={idx} className="group">
-                  <span
-                    ref={(el) => { sentenceRefs.current[idx] = el; }}
-                    className={`tts-sentence block p-6 rounded-2xl transition-all duration-500 cursor-pointer hover:bg-white/20 hover:shadow-xl hover:shadow-white/10 group-hover:scale-[1.02] border border-white/10 ${
-                      currentIndex === idx ? 'tts-highlight bg-gradient-to-r from-yellow-400 to-orange-400 text-black shadow-2xl shadow-yellow-400/50 scale-105 ring-4 ring-yellow-300/50' : ''
-                    }`}
-                    onClick={() => {
-                      window.speechSynthesis.cancel();
-                      setIsPlaying(true);
-                      setIsPaused(false);
-                      speakSentence(idx);
-                    }}
-                    title="Click to read from here"
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Read sentence ${idx + 1}`}
-                  >
-                    {sentence}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ═══════════ Sticky "Read Aloud" Bar ═══════════ */}
-      <div className="tts-fab-bar" aria-label="Text-to-Speech Reader Controls">
-        <div className="tts-fab-inner">
-
-          {/* Left: Playback Controls */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrev}
-              aria-label="Previous sentence"
-              className="tts-ctrl-btn"
-              title="Previous sentence"
-            >
-              <SkipBack size={16} />
-            </button>
-
+      {/* Massive Interaction Hit-Boxes Centered On Screen */}
+      <nav aria-label="Text to speech controls" className="fixed bottom-0 left-0 right-0 bg-[#000000] border-t-[12px] border-[#FFFF00] p-8 md:p-12 z-50 shadow-[0_-20px_60px_-15px_rgba(255,255,0,0.3)] flex justify-center items-center">
+        <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 max-h-[50vh] overflow-y-auto md:overflow-visible">
+          
+          {/* Rewind Button */}
+          <button 
+            onClick={handleRewind}
+            onFocus={playEarcon}
+            aria-label="Rewind Audio Lesson 10 seconds"
+            className="flex flex-col items-center justify-center gap-6 p-8 md:p-12 rounded-[3.5rem] border-[12px] border-[#FFFF00] bg-[#000000] text-[#FFFF00] focus:outline-none focus:ring-8 focus:ring-yellow-400 hover:bg-[#FFFF00] hover:text-[#000000] transition-colors group"
+          >
+            <RotateCcw className="w-20 h-20 md:w-28 md:h-28 group-hover:-rotate-12 transition-transform" strokeWidth={4} />
+            <span className="text-3xl md:text-4xl font-black uppercase tracking-widest text-center" aria-hidden="true">Rewind 10s</span>
+          </button>
+          
+          {/* Play/Pause Button */}
+          <button 
+            onClick={handlePlayPause}
+            onFocus={playEarcon}
+            aria-label={isPlaying ? 'Pause Audio Lesson' : 'Resume Audio Lesson'}
+            className="flex flex-col items-center justify-center gap-6 p-8 md:p-12 rounded-[3.5rem] border-[12px] border-[#FFFF00] bg-[#000000] text-[#FFFF00] focus:outline-none focus:ring-8 focus:ring-yellow-400 hover:bg-[#FFFF00] hover:text-[#000000] transition-colors group"
+          >
             {isPlaying ? (
-              <button
-                onClick={handlePause}
-                aria-label="Pause reading"
-                className="tts-play-btn tts-play-btn--active"
-                title="Pause"
-              >
-                <Pause size={20} />
-              </button>
+              <Pause className="w-20 h-20 md:w-28 md:h-28 group-hover:scale-110 transition-transform" strokeWidth={4} />
             ) : (
-              <button
-                onClick={handlePlay}
-                aria-label={isPaused ? "Resume reading" : "Start reading"}
-                className="tts-play-btn"
-                title={isPaused ? "Resume" : "Play"}
-              >
-                <Play size={20} className="ml-0.5" />
-              </button>
+              <Play className="ml-4 w-20 h-20 md:w-28 md:h-28 group-hover:scale-110 transition-transform" strokeWidth={4} />
             )}
+            <span className="text-3xl md:text-4xl font-black uppercase tracking-widest text-center" aria-hidden="true">
+              {isPlaying ? 'Pause' : 'Play'}
+            </span>
+          </button>
+          
+          {/* Forward Button */}
+          <button 
+            onClick={handleForward}
+            onFocus={playEarcon}
+            aria-label="Skip Forward Audio Lesson 10 seconds"
+            className="flex flex-col items-center justify-center gap-6 p-8 md:p-12 rounded-[3.5rem] border-[12px] border-[#FFFF00] bg-[#000000] text-[#FFFF00] focus:outline-none focus:ring-8 focus:ring-yellow-400 hover:bg-[#FFFF00] hover:text-[#000000] transition-colors group"
+          >
+            <RotateCw className="w-20 h-20 md:w-28 md:h-28 group-hover:rotate-12 transition-transform" strokeWidth={4} />
+            <span className="text-3xl md:text-4xl font-black uppercase tracking-widest text-center" aria-hidden="true">Forward 10s</span>
+          </button>
 
-            <button
-              onClick={handleStop}
-              aria-label="Stop reading"
-              className="tts-ctrl-btn"
-              title="Stop"
-            >
-              <Square size={14} />
-            </button>
-
-            <button
-              onClick={handleNext}
-              aria-label="Next sentence"
-              className="tts-ctrl-btn"
-              title="Next sentence"
-            >
-              <SkipForward size={16} />
-            </button>
-          </div>
-
-          {/* Center: Waveform + Progress */}
-          <div className="flex items-center gap-6">
-            {/* Real Web Audio Visualizer */}
-            <div className="flex items-center gap-2 relative">
-              <canvas
-                ref={canvasRef}
-                className="tts-audio-canvas"
-                aria-label={isPlaying ? "Live audio visualization" : "Visualizer ready"}
-              />
-              <div className="tts-canvas-overlay" />
-              {isPlaying && (
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 animate-pulse hidden sm:inline">
-                  Live Audio
-                </span>
-              )}
-            </div>
-
-            {/* Status */}
-            <div className="hidden sm:flex items-center gap-2">
-              {isPlaying && (
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              )}
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                {isPlaying ? 'Speaking' : isPaused ? 'Paused' : 'Ready'}
-              </span>
-            </div>
-
-            {/* Progress */}
-            <div className="hidden md:flex items-center gap-2">
-              <div className="w-24 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <span className="text-[10px] font-black text-slate-400 tabular-nums">
-                {currentIndex >= 0 ? currentIndex + 1 : 0}/{allText.length}
-              </span>
-            </div>
-          </div>
-
-          {/* Right: Controls - Speed, Volume, Voice, Loop */}
-          <div className="flex items-center gap-3">
-            {/* Speed */}
-            <div className="flex items-center gap-1">
-              {SPEEDS.map((s) => (
-                <button
-                  key={s.value}
-                  onClick={() => handleSpeedChange(s.value)}
-                  aria-label={s.title}
-                  title={s.title}
-                  className={`tts-speed-btn ${speed === s.value ? 'tts-speed-btn--active' : ''}`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            {/* Volume */}
-            <div className="flex items-center gap-1 text-xs whitespace-nowrap">
-              <span className="font-bold text-slate-700">Vol</span>
-              <input
-                type="range"
-                min="0" max="1" step="0.05"
-                value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
-                className="w-16 h-2 bg-slate-200 rounded-lg cursor-pointer accent-blue-600 hover:accent-blue-500 appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md"
-                aria-label="Volume"
-              />
-              <span className="w-5 font-mono text-slate-600">{Math.round(volume * 10)}</span>
-            </div>
-            {/* Voice Select */}
-            <select 
-              value={selectedVoice?.name || ''}
-              onChange={(e) => setSelectedVoice(voices.find(v => v.name === e.target.value) || null)}
-              className="px-1.5 py-0.5 text-xs rounded bg-white/90 border border-slate-200 focus:ring focus:ring-blue-400 text-slate-800 font-medium min-w-[90px] max-w-[140px]"
-              aria-label="Voice selection"
-            >
-              <option value="">Auto</option>
-              {voices.slice(0,8).map((v) => (
-                <option key={v.name} value={v.name}>{v.name.split(' (')[0]}</option>
-              ))}
-            </select>
-            {/* Loop Toggle */}
-            <button
-              onClick={() => setLoop(!loop)}
-              className={`p-1.5 rounded-full text-sm font-bold transition-all shadow-sm hover:shadow-md ${loop 
-                ? 'bg-emerald-500 text-white shadow-emerald-300/50 hover:bg-emerald-600 hover:shadow-emerald-400/50' 
-                : 'bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800'
-              }`}
-              aria-label={`Toggle loop ${loop ? 'on' : 'off'}`}
-              aria-pressed={loop}
-              title="Loop playback"
-            >
-              🔄
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
+      </nav>
+    </main>
   );
 }
