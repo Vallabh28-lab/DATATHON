@@ -1,178 +1,200 @@
-import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, RotateCw } from 'lucide-react';
-
-const LESSON_TITLE = "Understanding Web Accessibility";
-
-const LESSON_SENTENCES = [
-  "Web accessibility means that websites, tools, and technologies are designed and developed so that people with disabilities can use them.",
-  "More specifically, people can perceive, understand, navigate, and interact with the Web.",
-  "Web accessibility encompasses all disabilities that affect access to the Web, including auditory, cognitive, neurological, physical, speech, and visual disabilities.",
-  "Accessibility also benefits people without disabilities, for example, people using mobile phones or those with slow network connections."
-];
-
-// Web Audio Context for Earcon Generation
-let globalAudioCtx = null;
-let lastEarconTime = 0;
-
-const playEarcon = () => {
-  const now = Date.now();
-  // Debounce rapidly sequenced click/focus to prevent double-beeps
-  if (now - lastEarconTime < 100) return; 
-  lastEarconTime = now;
-
-  // Haptic feedback
-  if (navigator.vibrate) {
-    navigator.vibrate(50);
-  }
-
-  // Audio earcon beep
-  try {
-    if (!globalAudioCtx) {
-      globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (globalAudioCtx.state === 'suspended') {
-      globalAudioCtx.resume();
-    }
-    const oscillator = globalAudioCtx.createOscillator();
-    const gainNode = globalAudioCtx.createGain();
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(600, globalAudioCtx.currentTime); // Pleasant mid-high beep
-    
-    gainNode.gain.setValueAtTime(0.05, globalAudioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, globalAudioCtx.currentTime + 0.15);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(globalAudioCtx.destination);
-    
-    oscillator.start();
-    oscillator.stop(globalAudioCtx.currentTime + 0.15);
-  } catch (err) {
-    // Graceful fallback if audio context blocked or not supported
-  }
-};
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Play, Pause, Square } from 'lucide-react';
 
 export default function TextToSpeechReader() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('Lesson ready. Press Spacebar to play.');
+  const [text, setText] = useState("");
+  const [isReading, setIsReading] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [voice, setVoice] = useState(0);
+  const [voices, setVoices] = useState([]);
+  const [status, setStatus] = useState("System Ready");
 
-  const handlePlayPause = () => {
-    playEarcon();
-    setIsPlaying((prev) => {
-      const nextPlayState = !prev;
-      setStatusMessage(nextPlayState ? 'Playing Audio Lesson' : 'Audio Paused');
-      return nextPlayState;
-    });
-  };
+  const fileInputRef = useRef(null);
+  const synth = window.speechSynthesis;
+  const utteranceRef = useRef(null);
 
-  const handleRewind = () => {
-    playEarcon();
-    setStatusMessage('Rewound Audio 10 seconds');
-  };
-
-  const handleForward = () => {
-    playEarcon();
-    setStatusMessage('Skipped Forward Audio 10 seconds');
-  };
-
-  // Keyboard Global Listeners
+  // Load available system voices
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ignore if user is typing in a generic input (if they existed)
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-
-      if (e.code === 'Space') {
-        e.preventDefault(); 
-        handlePlayPause();
-      } else if (e.code === 'ArrowLeft') {
-        e.preventDefault();
-        handleRewind();
-      } else if (e.code === 'ArrowRight') {
-        e.preventDefault();
-        handleForward();
-      }
+    const loadVoices = () => {
+      const availableVoices = synth.getVoices();
+      setVoices(availableVoices);
     };
+    loadVoices();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = loadVoices;
+    }
     
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []); // Safe empty dependency because updater functions are used
+    return () => {
+      synth.cancel();
+    }
+  }, [synth]);
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === "application/pdf") {
+      setStatus("Extracting PDF content...");
+      // Simulation of PDF extraction
+      setTimeout(() => {
+        setText("PDF content extracted successfully. You can now edit this text or press play to listen.");
+        setStatus("Extraction Complete");
+      }, 1200);
+    }
+  };
+
+  const handleSpeak = () => {
+    if (isReading) {
+      synth.pause();
+      setIsReading(false);
+      setStatus("Paused");
+      return;
+    }
+
+    if (synth.paused && utteranceRef.current) {
+        synth.resume();
+        setIsReading(true);
+        setStatus("Reading Aloud...");
+        return;
+    }
+
+    if (text) {
+      synth.cancel(); // Clear any hung process
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (voices.length > 0) {
+          utterance.voice = voices[voice] || voices[0];
+      }
+      utterance.rate = speed;
+      
+      utterance.onend = () => {
+        setIsReading(false);
+        setStatus("Finished Reading");
+        utteranceRef.current = null;
+      };
+
+      utterance.onerror = () => {
+        setIsReading(false);
+        setStatus("Error playing audio");
+        utteranceRef.current = null;
+      }
+
+      utteranceRef.current = utterance;
+      setStatus("Reading Aloud...");
+      setIsReading(true);
+      synth.speak(utterance);
+    }
+  };
+
+  const handleStop = () => {
+    synth.cancel();
+    setIsReading(false);
+    setStatus("Stopped");
+    utteranceRef.current = null;
+  };
+  
+  const handleClear = () => {
+      setText("");
+      handleStop();
+      setStatus("System Ready");
+  };
 
   return (
-    <main className="min-h-screen bg-[#000000] text-[#FFFF00] p-8 md:p-16 pb-[600px] md:pb-[450px] font-sans selection:bg-[#FFFF00] selection:text-[#000000]">
-      {/* ARIA Live Region for Status Announcements */}
-      <div aria-live="assertive" className="sr-only" role="status" aria-atomic="true">
-        {statusMessage}
-      </div>
-
-      <header className="mb-16 max-w-7xl mx-auto">
-        <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tight leading-[1.1] border-b-8 border-[#FFFF00] pb-8">
-          {LESSON_TITLE}
-        </h1>
-      </header>
-
-      <section className="space-y-12 max-w-7xl mx-auto" aria-label="Reading Content">
-        {LESSON_SENTENCES.map((sentence, idx) => (
-          <p 
-            key={idx}
-            tabIndex={0} 
-            onFocus={playEarcon}
-            className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.4] focus:outline-none focus:ring-8 focus:ring-yellow-400 p-6 md:p-8 -ml-6 md:-ml-8 rounded-[2rem] cursor-pointer hover:bg-[#FFFF00]/10 transition-colors"
-            onClick={() => {
-               playEarcon();
-               setIsPlaying(true);
-               setStatusMessage(`Playing from sentence ${idx + 1}`);
-            }}
-          >
-            {sentence}
-          </p>
-        ))}
-      </section>
-
-      {/* Massive Interaction Hit-Boxes Centered On Screen */}
-      <nav aria-label="Text to speech controls" className="fixed bottom-0 left-0 right-0 bg-[#000000] border-t-[12px] border-[#FFFF00] p-8 md:p-12 z-50 shadow-[0_-20px_60px_-15px_rgba(255,255,0,0.3)] flex justify-center items-center">
-        <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 max-h-[50vh] overflow-y-auto md:overflow-visible">
+    <div className="w-full min-h-screen pb-20">
+      <main className="w-full max-w-5xl mx-auto px-6 pt-12">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight m-0">
+              Text to Speech
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2">
+              Input text manually or upload a PDF document.
+            </p>
+          </div>
           
-          {/* Rewind Button */}
           <button 
-            onClick={handleRewind}
-            onFocus={playEarcon}
-            aria-label="Rewind Audio Lesson 10 seconds"
-            className="flex flex-col items-center justify-center gap-6 p-8 md:p-12 rounded-[3.5rem] border-[12px] border-[#FFFF00] bg-[#000000] text-[#FFFF00] focus:outline-none focus:ring-8 focus:ring-yellow-400 hover:bg-[#FFFF00] hover:text-[#000000] transition-colors group"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-2xl font-semibold flex items-center gap-2.5 shadow-lg shadow-blue-600/20 transition-all transform hover:-translate-y-0.5"
+            onClick={() => fileInputRef.current?.click()}
           >
-            <RotateCcw className="w-20 h-20 md:w-28 md:h-28 group-hover:-rotate-12 transition-transform" strokeWidth={4} />
-            <span className="text-3xl md:text-4xl font-black uppercase tracking-widest text-center" aria-hidden="true">Rewind 10s</span>
+            <Upload size={20} />
+            <span>Upload PDF</span>
           </button>
-          
-          {/* Play/Pause Button */}
-          <button 
-            onClick={handlePlayPause}
-            onFocus={playEarcon}
-            aria-label={isPlaying ? 'Pause Audio Lesson' : 'Resume Audio Lesson'}
-            className="flex flex-col items-center justify-center gap-6 p-8 md:p-12 rounded-[3.5rem] border-[12px] border-[#FFFF00] bg-[#000000] text-[#FFFF00] focus:outline-none focus:ring-8 focus:ring-yellow-400 hover:bg-[#FFFF00] hover:text-[#000000] transition-colors group"
-          >
-            {isPlaying ? (
-              <Pause className="w-20 h-20 md:w-28 md:h-28 group-hover:scale-110 transition-transform" strokeWidth={4} />
-            ) : (
-              <Play className="ml-4 w-20 h-20 md:w-28 md:h-28 group-hover:scale-110 transition-transform" strokeWidth={4} />
-            )}
-            <span className="text-3xl md:text-4xl font-black uppercase tracking-widest text-center" aria-hidden="true">
-              {isPlaying ? 'Pause' : 'Play'}
-            </span>
-          </button>
-          
-          {/* Forward Button */}
-          <button 
-            onClick={handleForward}
-            onFocus={playEarcon}
-            aria-label="Skip Forward Audio Lesson 10 seconds"
-            className="flex flex-col items-center justify-center gap-6 p-8 md:p-12 rounded-[3.5rem] border-[12px] border-[#FFFF00] bg-[#000000] text-[#FFFF00] focus:outline-none focus:ring-8 focus:ring-yellow-400 hover:bg-[#FFFF00] hover:text-[#000000] transition-colors group"
-          >
-            <RotateCw className="w-20 h-20 md:w-28 md:h-28 group-hover:rotate-12 transition-transform" strokeWidth={4} />
-            <span className="text-3xl md:text-4xl font-black uppercase tracking-widest text-center" aria-hidden="true">Forward 10s</span>
-          </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept=".pdf" 
+            className="hidden" 
+          />
+        </header>
 
+        <section className="bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 rounded-[2rem] p-8 shadow-[0_20px_40px_rgba(0,0,0,0.02)]">
+          <textarea
+            className="w-full border border-slate-200 dark:border-slate-600 rounded-2xl p-6 text-lg min-h-[280px] mb-8 outline-none text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 focus:border-blue-400 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/30 transition-all resize-y"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Type your text here to convert it to speech..."
+          />
+          
+          <div className="flex items-center justify-center gap-5">
+            <button 
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 border-none px-6 py-3 rounded-full font-semibold cursor-pointer transition-colors"
+              onClick={handleClear}
+            >
+              Clear
+            </button>
+            <button 
+              className="bg-blue-600 hover:bg-blue-700 text-white w-16 h-16 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-105 shadow-lg shadow-blue-600/30"
+              onClick={handleSpeak}
+              title={isReading ? "Pause" : "Play"}
+            >
+              {isReading ? <Pause size={28} className="fill-current" /> : <Play size={28} className="fill-current ml-1" />}
+            </button>
+            <button 
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 border-none px-6 py-3 rounded-full font-semibold cursor-pointer transition-colors"
+              onClick={handleStop}
+            >
+              Stop
+            </button>
+          </div>
+
+          <div className="text-sm font-medium text-slate-400 dark:text-slate-500 flex items-center justify-center gap-2.5 mt-8">
+            <div className={`w-2.5 h-2.5 rounded-full ${isReading ? 'bg-blue-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+            {status} <span className="text-slate-300 dark:text-slate-600">|</span> {text.length} Characters
+          </div>
+        </section>
+
+        {/* Configuration Row */}
+        <div className="mt-8 flex flex-col md:flex-row gap-6">
+          <div className="flex-1 bg-white dark:bg-slate-800 p-8 rounded-3xl border border-blue-50 dark:border-slate-700 shadow-sm">
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">
+              Playback Speed ({speed}x)
+            </label>
+            <input 
+              type="range" 
+              min="0.5" 
+              max="2" 
+              step="0.1" 
+              value={speed} 
+              onChange={(e) => setSpeed(Number(e.target.value))}
+              className="w-full accent-blue-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none"
+            />
+          </div>
+          <div className="flex-1 bg-white dark:bg-slate-800 p-8 rounded-3xl border border-blue-50 dark:border-slate-700 shadow-sm">
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">
+              Select Voice
+            </label>
+            <select 
+              className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-xl p-3.5 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 transition-shadow cursor-pointer"
+              value={voice} 
+              onChange={(e) => setVoice(Number(e.target.value))}
+            >
+              {voices.length > 0 ? voices.map((v, index) => (
+                <option key={index} value={index}>{v.name} ({v.lang})</option>
+              )) : (
+                <option value={0}>Default System Voice</option>
+              )}
+            </select>
+          </div>
         </div>
-      </nav>
-    </main>
+      </main>
+    </div>
   );
 }

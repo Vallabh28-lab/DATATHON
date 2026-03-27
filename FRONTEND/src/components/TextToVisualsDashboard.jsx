@@ -1,204 +1,106 @@
-import React, { useState, useEffect } from 'react';
-import { Image as ImageIcon, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Image as ImageIcon, Sparkles, Download, Maximize2 } from 'lucide-react';
 
-const SAMPLE_ANCHORS = [
+const SAMPLE_VISUALS = [
   {
     id: 1,
     label: "Water Cycle Overview",
-    generatedAltText: "A heavily saturated visual diagram depicting the Earth's water cycle. Bright blue arrows point directly upward from a vast, dark blue ocean to visually represent evaporation. Fluffy white clouds gather prominently at the top sky area, representing condensation. Thick grey rain droplets fall aggressively over a large green mountain range to represent precipitation.",
-    imageUrl: "https://placehold.co/800x600/0f172a/00ffff?text=Water+Cycle+Diagram"
+    description: "A diagram depicting the Earth's water cycle, including evaporation, condensation, and precipitation.",
+    imageUrl: "https://placehold.co/800x600/e2e8f0/475569?text=Water+Cycle+Diagram"
   },
   {
     id: 2,
-    label: "Cell Structure",
-    generatedAltText: "Detailed 3D diagram of a biological cell showing the nucleus and mitochondria. A rigid, rectangular dark green cell wall heavily outlines the entire shape. Directly inside is a massive pale blue central vacuole taking up most of the space. To the bottom left side sits a distinct purple circular nucleus.",
-    imageUrl: "https://placehold.co/800x600/0f172a/00ffff?text=Plant+Cell+Structure"
+    label: "Structure of a Plant Cell",
+    description: "Detailed 3D diagram of a biological cell showing the nucleus, rigid cell wall, and central vacuole.",
+    imageUrl: "https://placehold.co/800x600/e2e8f0/475569?text=Plant+Cell+Structure"
   }
 ];
 
-// --- STEP 6 LOGIC: EARCON FEEDBACK ENGINE ---
-let globalAudioCtx = null;
-let lastFocusTime = 0;
-
-const initAudio = () => {
-  if (!globalAudioCtx) {
-    globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (globalAudioCtx.state === 'suspended') {
-    globalAudioCtx.resume();
-  }
-};
-
-const playFocusClick = () => {
-  const now = Date.now();
-  if (now - lastFocusTime < 100) return; // Debounce rapid focus shifts
-  lastFocusTime = now;
-
-  // STEP 7 LOGIC: Tactile Pulse Verification
-  if (navigator.vibrate) {
-    navigator.vibrate(50);
-  }
-
-  try {
-    initAudio();
-    const osc = globalAudioCtx.createOscillator();
-    const gain = globalAudioCtx.createGain();
-    
-    // Subtle Click sound
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(400, globalAudioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(100, globalAudioCtx.currentTime + 0.1);
-    
-    gain.gain.setValueAtTime(0.05, globalAudioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, globalAudioCtx.currentTime + 0.1);
-    
-    osc.connect(gain);
-    gain.connect(globalAudioCtx.destination);
-    
-    osc.start();
-    osc.stop(globalAudioCtx.currentTime + 0.1);
-  } catch (err) {
-    // Graceful fail out for restrictive autoplay browsers
-  }
-};
-
-const playSuccessChime = () => {
-  if (navigator.vibrate) navigator.vibrate([50, 50, 50]); // Success vibration
-  try {
-    initAudio();
-    // Arpeggiator sequence for "Success"
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-    notes.forEach((freq, i) => {
-      const osc = globalAudioCtx.createOscillator();
-      const gain = globalAudioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      
-      const startTime = globalAudioCtx.currentTime + (i * 0.1);
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.1, startTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
-      
-      osc.connect(gain);
-      gain.connect(globalAudioCtx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + 0.3);
-    });
-  } catch (err) {}
-};
-
-
-export default function TextToVisualsDashboard({ focusMode, theme }) {
-  const [focusedVisualId, setFocusedVisualId] = useState(null);
+export default function TextToVisualsDashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // STEP 7 LOGIC: Global "Search & Describe" Hooks
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Do not interrupt valid text-inputs if any are ever added to the page
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-      
-      if (e.code === 'KeyD' || e.key === 'd') {
-        if (focusedVisualId) {
-          const activeVisual = SAMPLE_ANCHORS.find(v => v.id === focusedVisualId);
-          if (activeVisual && window.speechSynthesis) {
-            window.speechSynthesis.cancel(); // Halt whatever was currently being narrated
-            const utterance = new SpeechSynthesisUtterance(activeVisual.generatedAltText);
-            
-            // Apply tactile pulse mirroring speech initialization
-            if (navigator.vibrate) navigator.vibrate(50);
-            
-            window.speechSynthesis.speak(utterance);
-          }
-        }
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [focusedVisualId]);
-
-
-  const handleSimulatedGeneration = () => {
+  const handleGenerate = () => {
     setIsGenerating(true);
-    // Simulate API fetch delay
-    setTimeout(() => {
-      setIsGenerating(false);
-      playSuccessChime(); // Broadcast the acoustic success earcon payload
-    }, 1500);
-  };
-
-  const renderImageWithMandatoryAlt = (visual) => {
-    const fallbackAlt = `Generated visual for ${visual.label}`;
-    const secureAltNode = visual.generatedAltText ? visual.generatedAltText.trim() : fallbackAlt;
-    const finalAltString = secureAltNode === "" ? fallbackAlt : secureAltNode;
-
-    return (
-      <img 
-        src={visual.imageUrl} 
-        alt={finalAltString}
-        aria-labelledby={`visual-label-${visual.id}`}
-        className="w-full h-full object-cover filter contrast-125 saturate-150"
-      />
-    );
+    // Simulate generation delay
+    setTimeout(() => setIsGenerating(false), 2000);
   };
 
   return (
-    <main className="min-h-screen bg-[#000000] text-[#FFFF00] p-8 md:p-16 max-w-5xl mx-auto font-sans selection:bg-[#FFFF00] selection:text-[#000000]">
-      <header className="mb-16 border-b-8 border-[#FFFF00] pb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-        <div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
-            Visual Anchor List
-          </h1>
-          <p className="sr-only">
-            You are currently in the Visual Anchor List. Use standard document scrolling or tab navigation to move between fully described visual items. Focus an item and press D to hear its description.
-          </p>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-32 transition-colors duration-300">
+      {/* Header */}
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 pt-16 pb-12 px-8">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-inner">
+              <ImageIcon size={32} />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
+                Text to Visuals
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">
+                Generate diagrams and visual aids from lesson text
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleGenerate}
+            disabled={isGenerating}
+            className="flex items-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full font-semibold transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 disabled:opacity-70 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+          >
+            <Sparkles size={20} className={isGenerating ? "animate-spin" : ""} />
+            {isGenerating ? "Processing..." : "Generate New Visual"}
+          </button>
         </div>
-
-        {/* Action Button wired to Step 6 Chime Hook */}
-        <button
-          onClick={handleSimulatedGeneration}
-          disabled={isGenerating}
-          onFocus={playFocusClick}
-          className="flex items-center justify-center gap-4 bg-[#000000] text-[#FFFF00] border-[8px] border-[#FFFF00] p-6 lg:p-8 rounded-[2.5rem] text-2xl md:text-3xl font-black uppercase tracking-wider focus:outline-none focus:ring-[12px] focus:ring-white hover:bg-[#FFFF00] hover:text-[#000000] transition-colors disabled:opacity-50"
-        >
-          <Sparkles className="w-8 h-8 md:w-10 md:h-10" />
-          {isGenerating ? 'Generating...' : 'Simulate Visuals'}
-        </button>
       </header>
 
-      <section aria-label="Generated Visuals" className="pb-32">
-        <ol className="space-y-16 list-none m-0 p-0" role="list">
-          {SAMPLE_ANCHORS.map((visual, index) => (
-            <li 
+      {/* Main Grid Floor */}
+      <main className="max-w-6xl mx-auto px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          {SAMPLE_VISUALS.map((visual) => (
+            <div 
               key={visual.id}
-              tabIndex={0}
-              onFocus={() => {
-                setFocusedVisualId(visual.id);
-                playFocusClick(); // Step 6 focus click sound & Step 7 vibrate
-              }}
-              className="flex flex-col gap-8 focus:outline-none focus:ring-[16px] focus:ring-white p-8 md:p-12 rounded-[3.5rem] transition-all border-[16px] border-[#FFFF00] bg-[#000000] hover:bg-[#111111] overflow-hidden break-words shadow-[0_15px_40px_-10px_rgba(255,255,0,0.15)] mb-12 block"
+              className="group bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col"
             >
-              <h2 
-                id={`visual-label-${visual.id}`}
-                className="text-4xl md:text-5xl font-black bg-[#000000] text-[#FFFF00] border-b-[8px] border-[#FFFF00] pb-6 uppercase tracking-wide leading-snug break-words"
-              >
-                Output {index + 1}: {visual.label}
-              </h2>
-
-              <figure 
-                className="w-full relative rounded-3xl overflow-hidden border-8 border-slate-800 bg-slate-950 aspect-video flex flex-col items-center justify-center"
-              >
-                {renderImageWithMandatoryAlt(visual)}
+              {/* Image Container */}
+              <div className="relative aspect-video bg-slate-100 dark:bg-slate-900 overflow-hidden isolate">
+                <img 
+                  src={visual.imageUrl} 
+                  alt={visual.description}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
                 
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none mix-blend-overlay opacity-30">
-                  <ImageIcon className="w-1/3 h-1/3 text-white" />
+                {/* Hover Action Overlay */}
+                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4 backdrop-blur-sm z-10">
+                  <button 
+                    className="bg-white/95 text-slate-900 p-4 rounded-full hover:bg-white hover:scale-110 transition-all shadow-xl"
+                    aria-label="Expand image"
+                  >
+                    <Maximize2 size={24} />
+                  </button>
+                  <button 
+                    className="bg-indigo-600/95 text-white p-4 rounded-full hover:bg-indigo-500 hover:scale-110 transition-all shadow-xl"
+                    aria-label="Download image"
+                  >
+                    <Download size={24} />
+                  </button>
                 </div>
-              </figure>
-            </li>
+              </div>
+
+              {/* Content Block */}
+              <div className="p-8 flex-1 flex flex-col">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">
+                  {visual.label}
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
+                  {visual.description}
+                </p>
+              </div>
+            </div>
           ))}
-        </ol>
-      </section>
-    </main>
+        </div>
+      </main>
+    </div>
   );
 }
