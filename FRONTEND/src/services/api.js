@@ -42,5 +42,6 @@ export const login = (data) => API.post('/auth/login', data);
 export const getMe = () => API.get('/auth/me');
 export const askAI = (query) => API.post('/ai/simplify', { query }); // Updated to match your ai.js route
 export const extractKeyword = (content) => API.post('/ai/keyword', { content });
+export const signTranslate = (landmarks) => API.post('/ai/sign-translate', { landmarks });
 
 export default API;

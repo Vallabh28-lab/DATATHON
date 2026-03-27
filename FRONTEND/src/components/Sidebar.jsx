@@ -12,7 +12,7 @@ export default function Sidebar({ userType, active, setActive, theme, collapsed 
     { id: 'ai', label: 'AI Assistant', icon: Sparkles, color: 'text-purple-500' },
     { id: 'texttospeech', label: 'Text to Speech', icon: Volume2, color: 'text-blue-500' },
     { id: 'texttovisuals', label: 'Text to Visuals', icon: Image, color: 'text-indigo-500' },
-    { id: 'texttosign', label: 'Text to Sign Language', icon: Hand, color: 'text-emerald-500' },
+{ id: 'signlang', label: 'Sign Language to Text', icon: Hand, color: 'text-cyan-500' },
     { id: 'gamified', label: 'Gamified Study', icon: Gamepad2, color: 'text-orange-500' },
     { id: 'simplify', label: 'Simplify Text', icon: FileEdit, color: 'text-cyan-500' },
     { id: 'notes', label: 'Study Notes', icon: FileText, color: 'text-slate-500' },

@@ -2,6 +2,9 @@ import React from 'react';
 import { ChevronRight, Search, Mic, Sparkles, Eye, Ear, MessageSquare } from 'lucide-react';
 import { askAI } from '../services/api';
 import TextToSpeechReader from './TextToSpeechReader';
+import TextToVisualsDashboard from './TextToVisualsDashboard';
+import SignLangTranslator from './SignLangTranslator.tsx';
+
 
 // Professional SaaS card style
 const card = 'rounded-2xl bg-white p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200';
@@ -606,17 +609,7 @@ const panels = {
     </div>
   ),
 
-  signsearch: () => (
-    <div className={`${card} text-center space-y-6`}>
-      <p className="text-6xl">🤟</p>
-      <h2 className="text-3xl font-black text-gray-900">Sign Recognition Search</h2>
-      <p className="text-gray-600 max-w-2xl mx-auto">Use your webcam to detect ISL (Indian Sign Language) signs and trigger search queries. Navigate using your native language.</p>
-      <div className="bg-gray-100 h-64 rounded-xl flex items-center justify-center">
-        <p className="text-gray-500">📹 Camera feed will appear here</p>
-      </div>
-      <button className="px-8 py-4 rounded-xl font-bold text-white bg-[#2F7EDA] hover:bg-[#1a5bb8] transition shadow-lg hover:shadow-xl">📹 Enable Camera</button>
-    </div>
-  ),
+  signlang: () => <SignLangTranslator />,
 
   // Vision Support (For Blind Users)
   // Hearing Support (For Deaf Users)
@@ -639,6 +632,8 @@ const panels = {
   subtitles: () => <div className={`${card} text-center space-y-6`}><p className="text-6xl">💬</p><h2 className="text-3xl font-black text-gray-900">Subtitles & Captions</h2><p className="text-gray-600">All videos include accurate subtitles.</p></div>,
   vocalize:      () => <div className={`${card} text-center space-y-6`}><p className="text-6xl">💬</p><h2 className="text-3xl font-black text-gray-900">Vocalize Dashboard</h2><p className="text-gray-600">Click phrases to have them spoken aloud.</p></div>,
   chatbridge:  () => <div className={`${card} text-center space-y-6`}><p className="text-6xl">🎵</p><h2 className="text-3xl font-black text-gray-900">Chat-Bridge</h2><p className="text-gray-600">Real-time text-to-speech for classroom participation.</p></div>,
+  texttovisuals: () => <TextToVisualsDashboard />,
+  
   settings: () => (
     <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 border border-gray-100 dark:border-slate-800 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
       <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-8">⚙️ Platform Preferences</h2>
@@ -664,6 +659,7 @@ const panels = {
 };
 
 export default function MainContent({ active, setActive, theme, focusMode }) {
+
   const dark  = theme === 'dark';
   const Panel = panels[active] || panels.dashboard;
 

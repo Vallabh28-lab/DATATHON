@@ -83,6 +83,22 @@ router.post('/simplify', async (req, res) => {
   }
 });
 
+router.post('/sign-translate', async (req, res) => {
+  try {
+    const { landmarks } = req.body;
+    if (!landmarks) return res.status(400).json({ error: "Landmarks required" });
+    
+    // Mock prediction (integrate Google_Model.txt later)
+    const prediction = landmarks.length > 10 ? "HELLO WORLD" : "UNKNOWN SIGN";
+    const confidence = 0.92;
+
+    res.json({ text: prediction, confidence });
+  } catch (error) {
+    console.error('Sign Translate Error:', error);
+    res.status(500).json({ error: "Sign translation failed" });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const { query } = req.body;

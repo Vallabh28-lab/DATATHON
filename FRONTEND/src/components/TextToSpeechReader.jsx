@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, Square, Volume2, SkipBack, SkipForward, Sparkles } from 'lucide-react';
 import SimplifiedCardView from './SimplifiedCardView';
 import { askAI } from '../services/api';
@@ -51,18 +52,26 @@ const LESSON_PARAGRAPHS = [
 // Flatten all sentences for sequential TTS
 const ALL_SENTENCES = LESSON_PARAGRAPHS.flatMap((p) => p.sentences);
 
-// ---------- Speed presets ----------
-const SPEEDS = [
-  { label: '🐢', value: 0.75, title: 'Slow (0.75×)' },
-  { label: '1×', value: 1, title: 'Normal (1×)' },
-  { label: '🐇', value: 1.25, title: 'Fast (1.25×)' },
-];
-
 export default function TextToSpeechReader({ focusMode, theme }) {
+  const SPEEDS = [
+    { label: '0.75×', value: 0.75, title: 'Slow' },
+    { label: '1×', value: 1, title: 'Normal' },
+    { label: '1.5×', value: 1.5, title: 'Fast' },
+    { label: '2×', value: 2, title: 'Very Fast' },
+  ];
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [speed, setSpeed] = useState(1);
+  const [volume, setVolume] = useState(1);
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  const [voices, setVoices] = useState([]);
+  const [loop, setLoop] = useState(false);
+  const [useCustomText, setUseCustomText] = useState(false);
+  const [customText, setCustomText] = useState('');
+  const [allText, setAllText] = useState(ALL_SENTENCES);
+  const textareaRef = useRef(null);
   
   // Simplified View Data
   const [simplifiedSteps, setSimplifiedSteps] = useState([]);
@@ -70,13 +79,85 @@ export default function TextToSpeechReader({ focusMode, theme }) {
 
   const utteranceRef = useRef(null);
   const indexRef = useRef(-1);
-  const speedRef = useRef(1);
+const speedRef = useRef(1);
+  const volumeRef = useRef(1);
   const isPlayingRef = useRef(false);
   const sentenceRefs = useRef([]);
 
-  // Keep refs in sync
+  // Web Audio Visualizer
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const canvasRef = useRef(null);
+  const animationIdRef = useRef(null);
+  const visualizerRafRef = useRef(null);
+  const dataArrayRef = useRef(null);
+
+// Keep refs in sync
   useEffect(() => { speedRef.current = speed; }, [speed]);
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
   useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+
+  // Load voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const availableVoices = speechSynthesis.getVoices();
+      setVoices(availableVoices.filter(v => v.lang.startsWith('en')));
+    };
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }, []);
+
+  // Web Audio Visualizer Init
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    dataArrayRef.current = dataArray;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const ctx = canvas.getContext('2d');
+
+    const draw = () => {
+      if (!analyserRef.current || !dataArrayRef.current) return;
+
+      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const barWidth = (canvas.width / bufferLength) * 2.5;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = (dataArrayRef.current[i] / 255) * canvas.height * 0.8;
+        const r = barHeight + 25 * (i / bufferLength);
+        const g = 250 * (1 - i / bufferLength);
+        const b = 50;
+
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.fillRect(x, canvas.height - barHeight / 2, barWidth, barHeight / 2);
+
+        x += barWidth + 1;
+      }
+
+      visualizerRafRef.current = requestAnimationFrame(draw);
+    };
+
+    animationIdRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+    };
+  }, []);
 
   // Auto-scroll the highlighted sentence into view
   useEffect(() => {
@@ -95,6 +176,16 @@ export default function TextToSpeechReader({ focusMode, theme }) {
     };
   }, []);
 
+  // Update allText when customText or lesson changes
+  useEffect(() => {
+    if (useCustomText) {
+      const sentences = customText.split(/[.!?]+/).filter(s => s.trim()).map(s => s.trim() + '.');
+      setAllText(sentences);
+    } else {
+      setAllText(ALL_SENTENCES);
+    }
+  }, [useCustomText, customText]);
+
   // Fetch Simplified Steps when Focus Mode is active
   useEffect(() => {
     if (focusMode && simplifiedSteps.length === 0) {
@@ -102,7 +193,7 @@ export default function TextToSpeechReader({ focusMode, theme }) {
         setLoadingSimplified(true);
         try {
           const content = ALL_SENTENCES.join(' ');
-          const response = await askAI(content); // askAI now points to /ai/simplify in api.js
+          const response = await askAI(content);
           if (response.data && response.data.steps) {
             setSimplifiedSteps(response.data.steps);
           }
@@ -116,8 +207,8 @@ export default function TextToSpeechReader({ focusMode, theme }) {
     }
   }, [focusMode, simplifiedSteps.length]);
 
-  const speakSentence = useCallback((index) => {
-    if (index >= ALL_SENTENCES.length) {
+const speakSentence = useCallback((index) => {
+    if (index >= allText.length) {
       setIsPlaying(false);
       setIsPaused(false);
       setCurrentIndex(-1);
@@ -125,9 +216,13 @@ export default function TextToSpeechReader({ focusMode, theme }) {
       return;
     }
 
-    const utt = new SpeechSynthesisUtterance(ALL_SENTENCES[index]);
+    const utt = new SpeechSynthesisUtterance(allText[index]);
     utt.lang = 'en-IN';
     utt.rate = speedRef.current;
+    utt.volume = volumeRef ? volumeRef.current : 1;
+    if (selectedVoice) {
+      utt.voice = selectedVoice;
+    }
 
     utt.onstart = () => {
       setCurrentIndex(index);
@@ -136,7 +231,14 @@ export default function TextToSpeechReader({ focusMode, theme }) {
 
     utt.onend = () => {
       if (isPlayingRef.current) {
-        speakSentence(index + 1);
+        if (index + 1 >= allText.length && loop) {
+          speakSentence(0);
+        } else if (index + 1 < allText.length) {
+          speakSentence(index + 1);
+        } else {
+          setIsPlaying(false);
+          setIsPaused(false);
+        }
       }
     };
 
@@ -188,12 +290,12 @@ export default function TextToSpeechReader({ focusMode, theme }) {
   }, [currentIndex, speakSentence]);
 
   const handleNext = useCallback(() => {
-    const newIdx = Math.min(ALL_SENTENCES.length - 1, (currentIndex >= 0 ? currentIndex : -1) + 1);
+    const newIdx = Math.min(allText.length - 1, (currentIndex >= 0 ? currentIndex : -1) + 1);
     window.speechSynthesis.cancel();
     setIsPlaying(true);
     setIsPaused(false);
     speakSentence(newIdx);
-  }, [currentIndex, speakSentence]);
+  }, [currentIndex, speakSentence, allText.length]);
 
   const handleSpeedChange = useCallback((val) => {
     setSpeed(val);
@@ -208,26 +310,75 @@ export default function TextToSpeechReader({ focusMode, theme }) {
   let globalIdx = 0;
 
   const progress = currentIndex >= 0
-    ? Math.round(((currentIndex + 1) / ALL_SENTENCES.length) * 100)
+    ? Math.round(((currentIndex + 1) / allText.length) * 100)
     : 0;
 
   return (
     <div className={[
-      "tts-reader-root space-y-8 pb-40 transition-all duration-700",
+      "tts-reader-root space-y-8 pb-40 transition-all duration-700 bg-gradient-to-b from-slate-900 via-gray-900 to-black min-h-screen",
       focusMode ? "font-focus-mode focus-mode-active max-w-3xl mx-auto" : ""
     ].join(' ')}>
+      {/* Input Toggle & Custom Text */}
+      <div className="max-w-4xl mx-auto p-8">
+        <div className="flex gap-3 mb-6">
+          <button
+            onClick={() => setUseCustomText(false)}
+            className={`px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex-1 ${
+              !useCustomText 
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-xl shadow-cyan-500/30' 
+                : 'bg-white/10 backdrop-blur-sm text-white/80 border border-white/20 hover:bg-white/20'
+            }`}
+            aria-pressed={!useCustomText}
+          >
+            Lesson Content
+          </button>
+          <button
+            onClick={() => setUseCustomText(true)}
+            className={`px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex-1 ${
+              useCustomText 
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-xl shadow-cyan-500/30' 
+                : 'bg-white/10 backdrop-blur-sm text-white/80 border border-white/20 hover:bg-white/20'
+            }`}
+            aria-pressed={useCustomText}
+          >
+            Custom Text
+          </button>
+        </div>
+
+        {useCustomText && (
+          <div 
+            className="w-full p-6 rounded-[2.5rem] bg-white/5 backdrop-blur-xl border-2 border-cyan-500/30 shadow-2xl shadow-cyan-500/20 mb-8 transition-all hover:shadow-cyan-500/40"
+            onDrop={(e) => {
+              e.preventDefault();
+              const text = e.dataTransfer.getData('text/plain');
+              setCustomText(text);
+            }}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <textarea
+              ref={textareaRef}
+              value={customText}
+              onChange={(e) => setCustomText(e.target.value)}
+              placeholder="Paste or type text here... Drag-drop files or copy-paste from anywhere!"
+              className="w-full h-48 p-6 bg-transparent border-none outline-none text-lg leading-relaxed text-white/95 placeholder-white/60 resize-vertical font-medium tracking-wide"
+              aria-label="Custom text input for TTS"
+            />
+          </div>
+        )}
+      </div> {/* Close max-w-4xl p-8 input container */}
+
       {/* Header - Hide in Focus Mode */}
       {!focusMode && (
         <div className="pt-4 animate-in fade-in duration-700">
           <div className="flex items-center gap-4 mb-2">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
-              <Volume2 size={28} />
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-2xl shadow-cyan-500/40 ring-2 ring-white/20">
+              <Volume2 size={32} />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-lg">
                 {LESSON_TITLE}
               </h1>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">
+              <p className="text-sm font-bold text-cyan-200 uppercase tracking-widest mt-1 drop-shadow-md">
                 {LESSON_SUBTITLE}
               </p>
             </div>
@@ -235,20 +386,44 @@ export default function TextToSpeechReader({ focusMode, theme }) {
         </div>
       )}
 
-      {/* Simplified View OR Standard View */}
-      {focusMode ? (
-        <SimplifiedCardView 
-          steps={simplifiedSteps} 
-          theme={theme} 
-          onExit={() => {}} // Could be used to toggle focusMode if we pass setFocusMode
-        />
-      ) : (
-        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {LESSON_PARAGRAPHS.map((para, pIdx) => {
-          const sectionSentences = para.sentences.map((sentence, sIdx) => {
-            const thisGlobal = globalIdx++;
-            return (
-              <span
+      {/* Content Container - Premium Frosted Glass */}
+      <div className="max-w-4xl mx-auto p-12">
+        {/* Simplified View OR Standard View */}
+        {focusMode ? (
+          <SimplifiedCardView 
+            steps={simplifiedSteps} 
+            theme={theme} 
+            onExit={() => {}} 
+          />
+        ) : (
+          <div className="bg-white/5 backdrop-blur-2xl rounded-[3rem] border border-cyan-400/40 shadow-2xl shadow-cyan-500/30 p-12 overflow-hidden ring-1 ring-cyan-500/20">
+            <div className="space-y-6">
+              {allText.map((sentence, idx) => (
+                <div key={idx} className="group">
+                  <span
+                    ref={(el) => { sentenceRefs.current[idx] = el; }}
+                    className={`tts-sentence block p-6 rounded-2xl transition-all duration-500 cursor-pointer hover:bg-white/20 hover:shadow-xl hover:shadow-white/10 group-hover:scale-[1.02] border border-white/10 ${
+                      currentIndex === idx ? 'tts-highlight bg-gradient-to-r from-yellow-400 to-orange-400 text-black shadow-2xl shadow-yellow-400/50 scale-105 ring-4 ring-yellow-300/50' : ''
+                    }`}
+                    onClick={() => {
+                      window.speechSynthesis.cancel();
+                      setIsPlaying(true);
+                      setIsPaused(false);
+                      speakSentence(idx);
+                    }}
+                    title="Click to read from here"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Read sentence ${idx + 1}`}
+                  >
+                    {sentence}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
                 key={thisGlobal}
                 ref={(el) => { sentenceRefs.current[thisGlobal] = el; }}
                 className={`tts-sentence inline transition-all duration-300 rounded-lg px-1 py-0.5 ${
@@ -263,27 +438,7 @@ export default function TextToSpeechReader({ focusMode, theme }) {
                 style={{ cursor: 'pointer' }}
                 title="Click to read from here"
               >
-                {sentence}{' '}
-              </span>
-            );
-          });
 
-          return (
-            <div key={pIdx} className="p-8 border-b border-slate-50 dark:border-slate-800 last:border-b-0">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-4 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center text-sm font-black">
-                  {pIdx + 1}
-                </span>
-                {para.heading}
-              </h3>
-              <p className="text-base leading-[1.9] text-slate-600 dark:text-slate-300 font-medium">
-                {sectionSentences}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-      )}
 
       {/* ═══════════ Sticky "Read Aloud" Bar ═══════════ */}
       <div className="tts-fab-bar" aria-label="Text-to-Speech Reader Controls">
@@ -341,23 +496,17 @@ export default function TextToSpeechReader({ focusMode, theme }) {
 
           {/* Center: Waveform + Progress */}
           <div className="flex items-center gap-6">
-            {/* Waveform Visualizer - Enhanced for Deaf Students */}
-            <div className="flex items-center gap-2">
-              <div className="tts-waveform" aria-label={isPlaying ? "Audio is playing" : "Audio is not playing"}>
-                {[...Array(9)].map((_, i) => (
-                  <span
-                    key={i}
-                    className={`tts-wave-bar ${isPlaying ? 'tts-wave-bar--active' : ''}`}
-                    style={{ 
-                      animationDelay: `${i * 0.05}s`,
-                      height: isPlaying ? undefined : `${4 + (i % 3) * 2}px`
-                    }}
-                  />
-                ))}
-              </div>
+            {/* Real Web Audio Visualizer */}
+            <div className="flex items-center gap-2 relative">
+              <canvas
+                ref={canvasRef}
+                className="tts-audio-canvas"
+                aria-label={isPlaying ? "Live audio visualization" : "Visualizer ready"}
+              />
+              <div className="tts-canvas-overlay" />
               {isPlaying && (
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 animate-pulse hidden sm:inline">
-                  Audio Active
+                  Live Audio
                 </span>
               )}
             </div>
@@ -381,24 +530,65 @@ export default function TextToSpeechReader({ focusMode, theme }) {
                 />
               </div>
               <span className="text-[10px] font-black text-slate-400 tabular-nums">
-                {currentIndex >= 0 ? currentIndex + 1 : 0}/{ALL_SENTENCES.length}
+                {currentIndex >= 0 ? currentIndex + 1 : 0}/{allText.length}
               </span>
             </div>
           </div>
 
-          {/* Right: Speed Controls */}
-          <div className="flex items-center gap-1">
-            {SPEEDS.map((s) => (
-              <button
-                key={s.value}
-                onClick={() => handleSpeedChange(s.value)}
-                aria-label={s.title}
-                title={s.title}
-                className={`tts-speed-btn ${speed === s.value ? 'tts-speed-btn--active' : ''}`}
-              >
-                {s.label}
-              </button>
-            ))}
+          {/* Right: Controls - Speed, Volume, Voice, Loop */}
+          <div className="flex items-center gap-3">
+            {/* Speed */}
+            <div className="flex items-center gap-1">
+              {SPEEDS.map((s) => (
+                <button
+                  key={s.value}
+                  onClick={() => handleSpeedChange(s.value)}
+                  aria-label={s.title}
+                  title={s.title}
+                  className={`tts-speed-btn ${speed === s.value ? 'tts-speed-btn--active' : ''}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            {/* Volume */}
+            <div className="flex items-center gap-1 text-xs whitespace-nowrap">
+              <span className="font-bold text-slate-700">Vol</span>
+              <input
+                type="range"
+                min="0" max="1" step="0.05"
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+                className="w-16 h-2 bg-slate-200 rounded-lg cursor-pointer accent-blue-600 hover:accent-blue-500 appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md"
+                aria-label="Volume"
+              />
+              <span className="w-5 font-mono text-slate-600">{Math.round(volume * 10)}</span>
+            </div>
+            {/* Voice Select */}
+            <select 
+              value={selectedVoice?.name || ''}
+              onChange={(e) => setSelectedVoice(voices.find(v => v.name === e.target.value) || null)}
+              className="px-1.5 py-0.5 text-xs rounded bg-white/90 border border-slate-200 focus:ring focus:ring-blue-400 text-slate-800 font-medium min-w-[90px] max-w-[140px]"
+              aria-label="Voice selection"
+            >
+              <option value="">Auto</option>
+              {voices.slice(0,8).map((v) => (
+                <option key={v.name} value={v.name}>{v.name.split(' (')[0]}</option>
+              ))}
+            </select>
+            {/* Loop Toggle */}
+            <button
+              onClick={() => setLoop(!loop)}
+              className={`p-1.5 rounded-full text-sm font-bold transition-all shadow-sm hover:shadow-md ${loop 
+                ? 'bg-emerald-500 text-white shadow-emerald-300/50 hover:bg-emerald-600 hover:shadow-emerald-400/50' 
+                : 'bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-800'
+              }`}
+              aria-label={`Toggle loop ${loop ? 'on' : 'off'}`}
+              aria-pressed={loop}
+              title="Loop playback"
+            >
+              🔄
+            </button>
           </div>
         </div>
       </div>

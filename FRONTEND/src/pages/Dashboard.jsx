@@ -30,8 +30,15 @@ export default function Dashboard() {
 
   const hc = theme === 'dark';
 
+  const visualsTheme = active === 'texttovisuals' ? 'texttovisuals-theme' : '';
+
   return (
-    <div className={['flex flex-col h-screen w-full overflow-hidden', hc ? 'bg-gray-950' : 'bg-[#f5f7fb]'].join(' ')}>
+    <div className={[
+      'flex flex-col h-screen w-full overflow-hidden', 
+      hc ? 'bg-gray-950' : 'bg-[#f5f7fb]',
+      visualsTheme
+    ].join(' ')}>
+
 
       {/* Navbar */}
       <Navbar

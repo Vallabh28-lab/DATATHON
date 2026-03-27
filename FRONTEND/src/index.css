@@ -3,9 +3,115 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --navy-bg: #0a192f;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(0, 255, 255, 0.3);
+    --cyan-glow: #00ffff;
+    --cyan-glow-50: rgba(0, 255, 255, 0.5);
+  }
+
   body {
     @apply antialiased text-slate-900 bg-[#f8fafc];
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* ═══════════ Text-to-Visuals Glassmorphism Theme ═══════════ */
+  .texttovisuals-theme {
+    background-color: var(--navy-bg);
+    color: white;
+  }
+
+  .texttovisuals-theme * {
+    color: white;
+    border-color: var(--glass-border);
+  }
+
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 4px 16px rgba(0, 255, 255, 0.1);
+  }
+
+  .glass-card:hover {
+    box-shadow: 
+      0 16px 48px rgba(0, 0, 0, 0.4),
+      0 0 32px var(--cyan-glow-50);
+  }
+
+  .cyan-glow {
+    box-shadow: 
+      0 0 20px var(--cyan-glow-50),
+      0 0 40px rgba(0, 255, 255, 0.2),
+      inset 0 0 20px rgba(0, 255, 255, 0.1);
+    border-color: var(--cyan-glow);
+  }
+
+  /* SignLangTranslator Styles */
+  .glass-card {
+    position: relative;
+  }
+
+  .recording-pulse {
+    animation: pulse-recording 1.5s infinite ease-in-out;
+  }
+
+  /* High-contrast mesh lines */
+  .high-contrast-mesh {
+    filter: drop-shadow(0 0 4px #00ffff);
+  }
+
+  .cyan-glow-selected {
+    box-shadow: 
+      0 0 40px var(--cyan-glow),
+      0 0 80px rgba(0, 255, 255, 0.4),
+      inset 0 0 40px rgba(0, 255, 255, 0.2);
+  }
+
+  .visual-skeleton {
+    background: linear-gradient(90deg, 
+      rgba(0, 255, 255, 0.1) 0%, 
+      rgba(59, 130, 246, 0.1) 50%, 
+      rgba(147, 51, 234, 0.1) 100%);
+    animation: pulse-glow 2s infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+  }
+
+  /* High Contrast Text for 4.5:1 ratio on navy */
+  .texttovisuals-theme .contrast-text {
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    font-weight: 600;
+  }
+
+  .texttovisuals-theme input, 
+  .texttovisuals-theme textarea {
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid var(--glass-border);
+    color: white;
+  }
+
+  .texttovisuals-theme input::placeholder,
+  .texttovisuals-theme textarea::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* Mark highlighting for selected keywords */
+  .texttovisuals-theme mark {
+    background: #ffeb3b !important;
+    color: #000 !important;
+    padding: 2px 6px;
+    border-radius: 6px;
+    box-shadow: 0 0 12px rgba(255, 235, 59, 0.6);
+    font-weight: 700;
   }
 
   /* Premium SaaS Typography */
@@ -53,7 +159,9 @@
   }
   .theme-high-contrast .bg-primary-600 {
     @apply bg-yellow-400 text-black;
-    /* AI Assistant Recording Visuals */
+  }
+
+  /* AI Assistant Recording Visuals */
   @keyframes pulse-recording {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.1); opacity: 0.8; }
@@ -96,11 +204,9 @@
     border-radius: 50%;
     display: inline-block;
     animation: typing-dot 1.2s infinite ease-in-out;
-  }
-
+  
   .typing-dot:nth-child(2) { animation-delay: 0.2s; }
   .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-}
 
   /* ═══════════ Text-to-Speech Reader ═══════════ */
 
@@ -122,9 +228,7 @@
 
   /* Sticky FAB Bar — Glassmorphism */
   .tts-fab-bar {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
+    position: missing;\n    bottom: 0;\n    left: 50%;
     transform: translateX(-50%);
     width: min(92vw, 880px);
     z-index: 100;
@@ -275,12 +379,12 @@
   }
   .theme-large-text h2 {
     @apply text-4xl;
-  }
+    }
   .theme-large-text p, .theme-large-text input, .theme-large-text button {
     @apply text-xl;
   }
 
-  /* ═══════════ Focus Mode (Simplified View) ═══════════ */
+  /* ═══════════ Focus Mode ( Asc (Simplified View) ═══════════ */
 
   .font-focus-mode {
     font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
@@ -314,5 +418,45 @@
     src: url('https://antigravity-assets.s3.amazonaws.com/fonts/OpenDyslexic-Regular.otf');
     font-weight: normal;
     font-style: normal;
+  }
+
+  /* NEW: Dyslexia Mode Toggle */
+  .dyslexia-mode {
+    font-family: 'OpenDyslexic', 'OpenDyslexic3', Georgia, serif !important;
+    font-feature-settings: 'dlig' 1, 'kern' 1;
+    letter-spacing: 0.025em;
+    line-height: 1.7;
+  }
+
+  .dyslexia-mode .tts-sentence,
+  .dyslexia-mode p,
+  .dyslexia-mode textarea {
+    font-family: 'OpenDyslexic', serif !important;
+  }
+
+  /* NEW: Web Audio Canvas Visualizer Styles */
+  .tts-audio-canvas {
+    display: block;
+    height: 40px;
+    width: 200px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .tts-canvas-bars {
+    fill: #3b82f6;
+    stroke: none;
+  }
+
+  .tts-canvas-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 20px;
+    background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.1) 50%, transparent 100%);
+    pointer-events: none;
   }
 }
