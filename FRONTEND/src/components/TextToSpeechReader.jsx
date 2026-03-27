@@ -424,21 +424,6 @@ const speakSentence = useCallback((index) => {
           </div>
         )}
       </div>
-                key={thisGlobal}
-                ref={(el) => { sentenceRefs.current[thisGlobal] = el; }}
-                className={`tts-sentence inline transition-all duration-300 rounded-lg px-1 py-0.5 ${
-                  currentIndex === thisGlobal ? 'tts-highlight' : ''
-                }`}
-                onClick={() => {
-                  window.speechSynthesis.cancel();
-                  setIsPlaying(true);
-                  setIsPaused(false);
-                  speakSentence(thisGlobal);
-                }}
-                style={{ cursor: 'pointer' }}
-                title="Click to read from here"
-              >
-
 
       {/* ═══════════ Sticky "Read Aloud" Bar ═══════════ */}
       <div className="tts-fab-bar" aria-label="Text-to-Speech Reader Controls">
